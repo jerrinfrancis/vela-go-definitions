@@ -14,74 +14,73 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestCommandTrait(t *testing.T) {
-	trait := Command()
+var _ = Describe("Command Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Command()
 
-	assert.Equal(t, "command", trait.GetName())
-	assert.Equal(t, "Add command on K8s pod for your workload which follows the pod spec in path 'spec.template'", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("command"))
+		Expect(trait.GetDescription()).To(Equal("Add command on K8s pod for your workload which follows the pod spec in path 'spec.template'"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Metadata
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Metadata
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// #PatchParams schema: all 5 fields with correct types
-	assert.Contains(t, cue, `#PatchParams: {`)
-	assert.Contains(t, cue, `containerName: *"" | string`)
-	assert.Contains(t, cue, `command: *null | [...string]`)
-	assert.Contains(t, cue, `args: *null | [...string]`)
-	assert.Contains(t, cue, `addArgs: *null | [...string]`)
-	assert.Contains(t, cue, `delArgs: *null | [...string]`)
+		// #PatchParams schema: all 5 fields with correct types
+		Expect(cue).To(ContainSubstring(`#PatchParams: {`))
+		Expect(cue).To(ContainSubstring(`containerName: *"" | string`))
+		Expect(cue).To(ContainSubstring(`command: *null | [...string]`))
+		Expect(cue).To(ContainSubstring(`args: *null | [...string]`))
+		Expect(cue).To(ContainSubstring(`addArgs: *null | [...string]`))
+		Expect(cue).To(ContainSubstring(`delArgs: *null | [...string]`))
 
-	// No duplicate containerName in #PatchParams (total count: 1 field in #PatchParams + 2 in _params mapping = 3)
-	assert.Equal(t, 3, strings.Count(cue, "containerName:"),
-		"containerName: should appear exactly 3 times (1 in #PatchParams + 2 in _params mapping), not 4 (which was the duplicate bug)")
+		// No duplicate containerName in #PatchParams (total count: 1 field in #PatchParams + 2 in _params mapping = 3)
+		Expect(strings.Count(cue, "containerName:")).To(Equal(3))
 
-	// PatchContainer body: complex merge logic keywords
-	assert.Contains(t, cue, `PatchContainer: {`)
-	assert.Contains(t, cue, `_params:         #PatchParams`)
-	assert.Contains(t, cue, `_baseContainers: context.output.spec.template.spec.containers`)
-	assert.Contains(t, cue, `_matchContainers_:`)
-	assert.Contains(t, cue, `_baseContainer: *_|_ | {...}`)
-	assert.Contains(t, cue, `_delArgs: {...}`)
-	assert.Contains(t, cue, `_argsMap: {for a in _args`)
-	assert.Contains(t, cue, `_addArgs: [...string]`)
+		// PatchContainer body: complex merge logic keywords
+		Expect(cue).To(ContainSubstring(`PatchContainer: {`))
+		Expect(cue).To(ContainSubstring(`_params:         #PatchParams`))
+		Expect(cue).To(ContainSubstring(`_baseContainers: context.output.spec.template.spec.containers`))
+		Expect(cue).To(ContainSubstring(`_matchContainers_:`))
+		Expect(cue).To(ContainSubstring(`_baseContainer: *_|_ | {...}`))
+		Expect(cue).To(ContainSubstring(`_delArgs: {...}`))
+		Expect(cue).To(ContainSubstring(`_argsMap: {for a in _args`))
+		Expect(cue).To(ContainSubstring(`_addArgs: [...string]`))
 
-	// _params mapping: auto-generated unconditional field mappings
-	assert.Contains(t, cue, "command: parameter.command",
-		"_params mapping should have unconditional command: parameter.command")
-	assert.Contains(t, cue, "args:    parameter.args",
-		"_params mapping should have unconditional args: parameter.args")
-	assert.Contains(t, cue, "addArgs: parameter.addArgs",
-		"_params mapping should have unconditional addArgs: parameter.addArgs")
-	assert.Contains(t, cue, "delArgs: parameter.delArgs",
-		"_params mapping should have unconditional delArgs: parameter.delArgs")
+		// _params mapping: auto-generated unconditional field mappings
+		Expect(cue).To(ContainSubstring("command: parameter.command"))
+		Expect(cue).To(ContainSubstring("args:    parameter.args"))
+		Expect(cue).To(ContainSubstring("addArgs: parameter.addArgs"))
+		Expect(cue).To(ContainSubstring("delArgs: parameter.delArgs"))
 
-	// Multi-container support
-	assert.Contains(t, cue, "if parameter.containers == _|_")
-	assert.Contains(t, cue, "if parameter.containers != _|_")
-	assert.Contains(t, cue, "containers: [...#PatchParams]")
+		// Multi-container support
+		Expect(cue).To(ContainSubstring("if parameter.containers == _|_"))
+		Expect(cue).To(ContainSubstring("if parameter.containers != _|_"))
+		Expect(cue).To(ContainSubstring("containers: [...#PatchParams]"))
 
-	// Error collection
-	assert.Contains(t, cue, `errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`)
+		// Error collection
+		Expect(cue).To(ContainSubstring(`errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`))
 
-	// Descriptions
-	assert.Contains(t, cue, "// +usage=Specify the command to use in the target container")
-	assert.Contains(t, cue, "// +usage=Specify the args to use in the target container")
-	assert.Contains(t, cue, "// +usage=Specify the args to add in the target container")
-	assert.Contains(t, cue, "// +usage=Specify the existing args to delete in the target container")
-	assert.Contains(t, cue, "// +usage=Specify the commands for multiple containers")
-}
+		// Descriptions
+		Expect(cue).To(ContainSubstring("// +usage=Specify the command to use in the target container"))
+		Expect(cue).To(ContainSubstring("// +usage=Specify the args to use in the target container"))
+		Expect(cue).To(ContainSubstring("// +usage=Specify the args to add in the target container"))
+		Expect(cue).To(ContainSubstring("// +usage=Specify the existing args to delete in the target container"))
+		Expect(cue).To(ContainSubstring("// +usage=Specify the commands for multiple containers"))
+	})
+})

@@ -14,78 +14,73 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestSecurityContextTrait(t *testing.T) {
-	trait := SecurityContext()
+var _ = Describe("SecurityContext Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.SecurityContext()
 
-	assert.Equal(t, "securitycontext", trait.GetName())
-	assert.Equal(t, "Adds security context to the container spec in path 'spec.template.spec.containers.[].securityContext'.", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("securitycontext"))
+		Expect(trait.GetDescription()).To(Equal("Adds security context to the container spec in path 'spec.template.spec.containers.[].securityContext'."))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Metadata
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Metadata
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// #PatchParams: fields with explicit defaults use *default | type
-	assert.Contains(t, cue, `containerName: *"" | string`)
-	assert.Contains(t, cue, `allowPrivilegeEscalation: *false | bool`)
-	assert.Contains(t, cue, `readOnlyRootFilesystem: *false | bool`)
-	assert.Contains(t, cue, `privileged: *false | bool`)
-	assert.Contains(t, cue, `runAsNonRoot: *true | bool`)
+		// #PatchParams: fields with explicit defaults use *default | type
+		Expect(cue).To(ContainSubstring(`containerName: *"" | string`))
+		Expect(cue).To(ContainSubstring(`allowPrivilegeEscalation: *false | bool`))
+		Expect(cue).To(ContainSubstring(`readOnlyRootFilesystem: *false | bool`))
+		Expect(cue).To(ContainSubstring(`privileged: *false | bool`))
+		Expect(cue).To(ContainSubstring(`runAsNonRoot: *true | bool`))
 
-	// #PatchParams: fields with != _|_ condition use optional syntax (field?: type)
-	assert.Contains(t, cue, `runAsUser?: int`,
-		"runAsUser should be optional, not *null | int")
-	assert.Contains(t, cue, `runAsGroup?: int`,
-		"runAsGroup should be optional, not *null | int")
-	assert.Contains(t, cue, `addCapabilities?: [...string]`,
-		"addCapabilities should be optional, not *null | [...string]")
-	assert.Contains(t, cue, `dropCapabilities?: [...string]`,
-		"dropCapabilities should be optional, not *null | [...string]")
+		// #PatchParams: fields with != _|_ condition use optional syntax (field?: type)
+		Expect(cue).To(ContainSubstring(`runAsUser?: int`))
+		Expect(cue).To(ContainSubstring(`runAsGroup?: int`))
+		Expect(cue).To(ContainSubstring(`addCapabilities?: [...string]`))
+		Expect(cue).To(ContainSubstring(`dropCapabilities?: [...string]`))
 
-	// Must NOT have *null | type for optional fields
-	assert.NotContains(t, cue, `runAsUser: *null | int`,
-		"runAsUser should NOT use *null default")
-	assert.NotContains(t, cue, `runAsGroup: *null | int`,
-		"runAsGroup should NOT use *null default")
-	assert.NotContains(t, cue, `addCapabilities: *null`,
-		"addCapabilities should NOT use *null default")
-	assert.NotContains(t, cue, `dropCapabilities: *null`,
-		"dropCapabilities should NOT use *null default")
+		// Must NOT have *null | type for optional fields
+		Expect(cue).NotTo(ContainSubstring(`runAsUser: *null | int`))
+		Expect(cue).NotTo(ContainSubstring(`runAsGroup: *null | int`))
+		Expect(cue).NotTo(ContainSubstring(`addCapabilities: *null`))
+		Expect(cue).NotTo(ContainSubstring(`dropCapabilities: *null`))
 
-	// PatchContainer structure
-	assert.Contains(t, cue, `#PatchParams: {`)
-	assert.Contains(t, cue, `PatchContainer: {`)
-	assert.Contains(t, cue, `_params:         #PatchParams`)
+		// PatchContainer structure
+		Expect(cue).To(ContainSubstring(`#PatchParams: {`))
+		Expect(cue).To(ContainSubstring(`PatchContainer: {`))
+		Expect(cue).To(ContainSubstring(`_params:         #PatchParams`))
 
-	// PatchContainer body: conditional blocks for optional fields
-	assert.Contains(t, cue, `if _params.runAsUser != _|_`)
-	assert.Contains(t, cue, `if _params.runAsGroup != _|_`)
-	assert.Contains(t, cue, `if _params.addCapabilities != _|_`)
-	assert.Contains(t, cue, `if _params.dropCapabilities != _|_`)
+		// PatchContainer body: conditional blocks for optional fields
+		Expect(cue).To(ContainSubstring(`if _params.runAsUser != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.runAsGroup != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.addCapabilities != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.dropCapabilities != _|_`))
 
-	// PatchContainer body: unconditional assignments for fields with defaults
-	assert.Contains(t, cue, `allowPrivilegeEscalation: _params.allowPrivilegeEscalation`)
-	assert.Contains(t, cue, `readOnlyRootFilesystem:   _params.readOnlyRootFilesystem`)
-	assert.Contains(t, cue, `privileged:               _params.privileged`)
-	assert.Contains(t, cue, `runAsNonRoot:             _params.runAsNonRoot`)
+		// PatchContainer body: unconditional assignments for fields with defaults
+		Expect(cue).To(ContainSubstring(`allowPrivilegeEscalation: _params.allowPrivilegeEscalation`))
+		Expect(cue).To(ContainSubstring(`readOnlyRootFilesystem:   _params.readOnlyRootFilesystem`))
+		Expect(cue).To(ContainSubstring(`privileged:               _params.privileged`))
+		Expect(cue).To(ContainSubstring(`runAsNonRoot:             _params.runAsNonRoot`))
 
-	// Multi-container support
-	assert.Contains(t, cue, "parameter: #PatchParams | close({")
-	assert.Contains(t, cue, "containers: [...#PatchParams]")
+		// Multi-container support
+		Expect(cue).To(ContainSubstring("parameter: #PatchParams | close({"))
+		Expect(cue).To(ContainSubstring("containers: [...#PatchParams]"))
 
-	// Error collection
-	assert.Contains(t, cue, `errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`)
-}
+		// Error collection
+		Expect(cue).To(ContainSubstring(`errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`))
+	})
+})

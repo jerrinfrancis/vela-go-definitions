@@ -14,60 +14,58 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestContainerImageTrait(t *testing.T) {
-	trait := ContainerImage()
+var _ = Describe("Container Image Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.ContainerImage()
 
-	assert.Equal(t, "container-image", trait.GetName())
-	assert.Equal(t, "Set the image of the container.", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("container-image"))
+		Expect(trait.GetDescription()).To(Equal("Set the image of the container."))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Verify trait metadata
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"deployments.apps"`)
+		// Verify trait metadata
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
 
-	assert.Contains(t, cue, `imagePullPolicy: *"" | "IfNotPresent" | "Always" | "Never"`,
-		"imagePullPolicy should default to empty string, not null")
-	assert.NotContains(t, cue, `imagePullPolicy: *null`,
-		"imagePullPolicy should NOT default to null")
+		Expect(cue).To(ContainSubstring(`imagePullPolicy: *"" | "IfNotPresent" | "Always" | "Never"`))
+		Expect(cue).NotTo(ContainSubstring(`imagePullPolicy: *null`))
 
-	assert.Contains(t, cue, "imagePullPolicy: parameter.imagePullPolicy",
-		"imagePullPolicy should be mapped unconditionally in _params")
+		Expect(cue).To(ContainSubstring("imagePullPolicy: parameter.imagePullPolicy"))
 
-	assert.Contains(t, cue, "parameter: #PatchParams | close({",
-		"parameter should reference #PatchParams without star default marker")
+		Expect(cue).To(ContainSubstring("parameter: #PatchParams | close({"))
 
-	assert.Equal(t, 1, strings.Count(cue, "parameter:"),
-		"parameter: should appear exactly once (no duplicate)")
-	assert.NotContains(t, cue, "parameter: {}",
-		"should not have empty parameter: {} block")
+		Expect(strings.Count(cue, "parameter:")).To(Equal(1))
+		Expect(cue).NotTo(ContainSubstring("parameter: {}"))
 
-	assert.Contains(t, cue, "// +usage=Specify the image of the container")
-	assert.Contains(t, cue, "// +usage=Specify the image pull policy of the container")
-	assert.Contains(t, cue, "// +usage=Specify the container image for multiple containers")
+		Expect(cue).To(ContainSubstring("// +usage=Specify the image of the container"))
+		Expect(cue).To(ContainSubstring("// +usage=Specify the image pull policy of the container"))
+		Expect(cue).To(ContainSubstring("// +usage=Specify the container image for multiple containers"))
 
-	// PatchContainer structure
-	assert.Contains(t, cue, `#PatchParams: {`)
-	assert.Contains(t, cue, `PatchContainer: {`)
-	assert.Contains(t, cue, `_params:         #PatchParams`)
-	assert.Contains(t, cue, `_baseContainers: context.output.spec.template.spec.containers`)
-	assert.Contains(t, cue, `errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`)
+		// PatchContainer structure
+		Expect(cue).To(ContainSubstring(`#PatchParams: {`))
+		Expect(cue).To(ContainSubstring(`PatchContainer: {`))
+		Expect(cue).To(ContainSubstring(`_params:         #PatchParams`))
+		Expect(cue).To(ContainSubstring(`_baseContainers: context.output.spec.template.spec.containers`))
+		Expect(cue).To(ContainSubstring(`errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`))
 
-	// PatchContainer body: conditional for imagePullPolicy inside PatchContainer
-	assert.Contains(t, cue, `if _params.imagePullPolicy != ""`)
+		// PatchContainer body: conditional for imagePullPolicy inside PatchContainer
+		Expect(cue).To(ContainSubstring(`if _params.imagePullPolicy != ""`))
 
-	// Multi-container support
-	assert.Contains(t, cue, "if parameter.containers == _|_")
-	assert.Contains(t, cue, "if parameter.containers != _|_")
-	assert.Contains(t, cue, "containers: [...#PatchParams]")
-}
+		// Multi-container support
+		Expect(cue).To(ContainSubstring("if parameter.containers == _|_"))
+		Expect(cue).To(ContainSubstring("if parameter.containers != _|_"))
+		Expect(cue).To(ContainSubstring("containers: [...#PatchParams]"))
+	})
+})

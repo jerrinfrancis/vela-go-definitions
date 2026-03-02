@@ -14,45 +14,43 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestSidecarTrait(t *testing.T) {
-	trait := Sidecar()
+var _ = Describe("Sidecar Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Sidecar()
 
-	assert.Equal(t, "sidecar", trait.GetName())
+		Expect(trait.GetName()).To(Equal("sidecar"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Verify key elements are present
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
-	assert.Contains(t, cue, `name: string`)
-	assert.Contains(t, cue, `image: string`)
-	assert.Contains(t, cue, `#HealthProbe`)
-	assert.Contains(t, cue, `livenessProbe?:`)
-	assert.Contains(t, cue, `readinessProbe?:`)
+		// Verify key elements are present
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
+		Expect(cue).To(ContainSubstring(`name: string`))
+		Expect(cue).To(ContainSubstring(`image: string`))
+		Expect(cue).To(ContainSubstring(`#HealthProbe`))
+		Expect(cue).To(ContainSubstring(`livenessProbe?:`))
+		Expect(cue).To(ContainSubstring(`readinessProbe?:`))
 
-	// #HealthProbe exec.command should have string element type
-	assert.Contains(t, cue, `command: [...string]`,
-		"exec.command should be typed as [...string], not untyped [...]")
-	assert.NotContains(t, cue, "command: [...]",
-		"exec.command should NOT be untyped [...]")
+		// #HealthProbe exec.command should have string element type
+		Expect(cue).To(ContainSubstring(`command: [...string]`))
+		Expect(cue).NotTo(ContainSubstring("command: [...]"))
 
-	// #HealthProbe httpGet.httpHeaders should have structured elements
-	assert.Contains(t, cue, `httpHeaders?: [...{`,
-		"httpHeaders should be an array of structs")
-	assert.Contains(t, cue, "name:  string",
-		"httpHeaders elements should have a name field")
-	assert.Contains(t, cue, "value: string",
-		"httpHeaders elements should have a value field")
-}
+		// #HealthProbe httpGet.httpHeaders should have structured elements
+		Expect(cue).To(ContainSubstring(`httpHeaders?: [...{`))
+		Expect(cue).To(ContainSubstring("name:  string"))
+		Expect(cue).To(ContainSubstring("value: string"))
+	})
+})

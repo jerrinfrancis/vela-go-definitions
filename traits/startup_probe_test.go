@@ -14,82 +14,85 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestStartupProbeTrait(t *testing.T) {
-	trait := StartupProbe()
+var _ = Describe("StartupProbe Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.StartupProbe()
 
-	assert.Equal(t, "startup-probe", trait.GetName())
-	assert.Equal(t, "Add startup probe hooks for the specified container of K8s pod for your workload which follows the pod spec in path 'spec.template'.", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("startup-probe"))
+		Expect(trait.GetDescription()).To(Equal("Add startup probe hooks for the specified container of K8s pod for your workload which follows the pod spec in path 'spec.template'."))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Metadata
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Metadata
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// #PatchParams: fields with defaults use *default | type
-	assert.Contains(t, cue, `initialDelaySeconds: *0 | int`)
-	assert.Contains(t, cue, `periodSeconds: *10 | int`)
-	assert.Contains(t, cue, `timeoutSeconds: *1 | int`)
-	assert.Contains(t, cue, `successThreshold: *1 | int`)
-	assert.Contains(t, cue, `failureThreshold: *3 | int`)
+		// #PatchParams: fields with defaults use *default | type
+		Expect(cue).To(ContainSubstring(`initialDelaySeconds: *0 | int`))
+		Expect(cue).To(ContainSubstring(`periodSeconds: *10 | int`))
+		Expect(cue).To(ContainSubstring(`timeoutSeconds: *1 | int`))
+		Expect(cue).To(ContainSubstring(`successThreshold: *1 | int`))
+		Expect(cue).To(ContainSubstring(`failureThreshold: *3 | int`))
 
-	// #PatchParams: optional fields use field?: type syntax
-	assert.Contains(t, cue, `terminationGracePeriodSeconds?: int`)
-	assert.Contains(t, cue, `exec?: {`)
-	assert.Contains(t, cue, `httpGet?: {`)
-	assert.Contains(t, cue, `grpc?: {`)
-	assert.Contains(t, cue, `tcpSocket?: {`)
+		// #PatchParams: optional fields use field?: type syntax
+		Expect(cue).To(ContainSubstring(`terminationGracePeriodSeconds?: int`))
+		Expect(cue).To(ContainSubstring(`exec?: {`))
+		Expect(cue).To(ContainSubstring(`httpGet?: {`))
+		Expect(cue).To(ContainSubstring(`grpc?: {`))
+		Expect(cue).To(ContainSubstring(`tcpSocket?: {`))
 
-	// PatchContainer structure
-	assert.Contains(t, cue, `#StartupProbeParams: {`)
-	assert.Contains(t, cue, `PatchContainer: {`)
-	assert.Contains(t, cue, `_params:         #StartupProbeParams`)
-	assert.Contains(t, cue, `_baseContainers: context.output.spec.template.spec.containers`)
+		// PatchContainer structure
+		Expect(cue).To(ContainSubstring(`#StartupProbeParams: {`))
+		Expect(cue).To(ContainSubstring(`PatchContainer: {`))
+		Expect(cue).To(ContainSubstring(`_params:         #StartupProbeParams`))
+		Expect(cue).To(ContainSubstring(`_baseContainers: context.output.spec.template.spec.containers`))
 
-	// PatchContainer body: conditional blocks for optional probe types
-	assert.Contains(t, cue, `if _params.exec != _|_`)
-	assert.Contains(t, cue, `if _params.httpGet != _|_`)
-	assert.Contains(t, cue, `if _params.grpc != _|_`)
-	assert.Contains(t, cue, `if _params.tcpSocket != _|_`)
-	assert.Contains(t, cue, `if _params.terminationGracePeriodSeconds != _|_`)
+		// PatchContainer body: conditional blocks for optional probe types
+		Expect(cue).To(ContainSubstring(`if _params.exec != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.httpGet != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.grpc != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.tcpSocket != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.terminationGracePeriodSeconds != _|_`))
 
-	// PatchContainer body: conditional blocks for fields with IsSet().Default()
-	assert.Contains(t, cue, `if _params.initialDelaySeconds != _|_`)
-	assert.Contains(t, cue, `if _params.periodSeconds != _|_`)
-	assert.Contains(t, cue, `if _params.timeoutSeconds != _|_`)
-	assert.Contains(t, cue, `if _params.successThreshold != _|_`)
-	assert.Contains(t, cue, `if _params.failureThreshold != _|_`)
+		// PatchContainer body: conditional blocks for fields with IsSet().Default()
+		Expect(cue).To(ContainSubstring(`if _params.initialDelaySeconds != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.periodSeconds != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.timeoutSeconds != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.successThreshold != _|_`))
+		Expect(cue).To(ContainSubstring(`if _params.failureThreshold != _|_`))
 
-	// startupProbe group wrapper
-	assert.Contains(t, cue, `startupProbe: {`)
+		// startupProbe group wrapper
+		Expect(cue).To(ContainSubstring(`startupProbe: {`))
 
-	// Multi-container support with custom param name "probes"
-	assert.Contains(t, cue, `parameter: *#StartupProbeParams | close({`)
-	assert.Contains(t, cue, `probes: [...#StartupProbeParams]`)
-	assert.Contains(t, cue, `// +usage=Specify the startup probe for multiple containers`)
+		// Multi-container support with custom param name "probes"
+		Expect(cue).To(ContainSubstring(`parameter: *#StartupProbeParams | close({`))
+		Expect(cue).To(ContainSubstring(`probes: [...#StartupProbeParams]`))
+		Expect(cue).To(ContainSubstring(`// +usage=Specify the startup probe for multiple containers`))
 
-	// Error collection
-	assert.Contains(t, cue, `errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`)
+		// Error collection
+		Expect(cue).To(ContainSubstring(`errs: [for c in patch.spec.template.spec.containers if c.err != _|_ {c.err}]`))
 
-	// Descriptions for probe fields
-	assert.Contains(t, cue, `// +usage=Number of seconds after the container has started before liveness probes are initiated`)
-	assert.Contains(t, cue, `// +usage=How often, in seconds, to execute the probe`)
-	assert.Contains(t, cue, `// +usage=Number of seconds after which the probe times out`)
+		// Descriptions for probe fields
+		Expect(cue).To(ContainSubstring(`// +usage=Number of seconds after the container has started before liveness probes are initiated`))
+		Expect(cue).To(ContainSubstring(`// +usage=How often, in seconds, to execute the probe`))
+		Expect(cue).To(ContainSubstring(`// +usage=Number of seconds after which the probe times out`))
 
-	// No duplicate parameter blocks
-	assert.Equal(t, 1, strings.Count(cue, "parameter:"),
-		"parameter: should appear exactly once")
-}
+		// No duplicate parameter blocks
+		Expect(strings.Count(cue, "parameter:")).To(Equal(1))
+	})
+})

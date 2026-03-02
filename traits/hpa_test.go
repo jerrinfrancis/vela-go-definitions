@@ -14,63 +14,66 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestHPATrait(t *testing.T) {
-	trait := HPA()
+var _ = Describe("HPA", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.HPA()
 
-	assert.Equal(t, "hpa", trait.GetName())
-	assert.Equal(t, "Configure k8s HPA for Deployment or Statefulsets", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("hpa"))
+		Expect(trait.GetDescription()).To(Equal("Configure k8s HPA for Deployment or Statefulsets"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: false`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: false`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
 
-	// Conditional apiVersion based on cluster version
-	assert.Contains(t, cue, `if context.clusterVersion.minor < 23`)
-	assert.Contains(t, cue, `apiVersion: "autoscaling/v2beta2"`)
-	assert.Contains(t, cue, `if context.clusterVersion.minor >= 23`)
-	assert.Contains(t, cue, `apiVersion: "autoscaling/v2"`)
+		// Conditional apiVersion based on cluster version
+		Expect(cue).To(ContainSubstring(`if context.clusterVersion.minor < 23`))
+		Expect(cue).To(ContainSubstring(`apiVersion: "autoscaling/v2beta2"`))
+		Expect(cue).To(ContainSubstring(`if context.clusterVersion.minor >= 23`))
+		Expect(cue).To(ContainSubstring(`apiVersion: "autoscaling/v2"`))
 
-	// Output resource
-	assert.Contains(t, cue, `outputs: hpa:`)
-	assert.Contains(t, cue, `kind: "HorizontalPodAutoscaler"`)
-	assert.Contains(t, cue, `metadata: name: context.name`)
+		// Output resource
+		Expect(cue).To(ContainSubstring(`outputs: hpa:`))
+		Expect(cue).To(ContainSubstring(`kind: "HorizontalPodAutoscaler"`))
+		Expect(cue).To(ContainSubstring(`metadata: name: context.name`))
 
-	// Scale target ref
-	assert.Contains(t, cue, `scaleTargetRef:`)
-	assert.Contains(t, cue, `parameter.targetAPIVersion`)
-	assert.Contains(t, cue, `parameter.targetKind`)
+		// Scale target ref
+		Expect(cue).To(ContainSubstring(`scaleTargetRef:`))
+		Expect(cue).To(ContainSubstring(`parameter.targetAPIVersion`))
+		Expect(cue).To(ContainSubstring(`parameter.targetKind`))
 
-	// Metrics array: static CPU, conditional memory, iterated custom
-	assert.Contains(t, cue, `metrics:`)
-	assert.Contains(t, cue, `name: "cpu"`)
-	assert.Contains(t, cue, `if parameter["mem"] != _|_`)
-	assert.Contains(t, cue, `name: "memory"`)
-	assert.Contains(t, cue, `if parameter["podCustomMetrics"] != _|_ for m in parameter.podCustomMetrics`)
-	assert.Contains(t, cue, `type: "Pods"`)
+		// Metrics array: static CPU, conditional memory, iterated custom
+		Expect(cue).To(ContainSubstring(`metrics:`))
+		Expect(cue).To(ContainSubstring(`name: "cpu"`))
+		Expect(cue).To(ContainSubstring(`if parameter["mem"] != _|_`))
+		Expect(cue).To(ContainSubstring(`name: "memory"`))
+		Expect(cue).To(ContainSubstring(`if parameter["podCustomMetrics"] != _|_ for m in parameter.podCustomMetrics`))
+		Expect(cue).To(ContainSubstring(`type: "Pods"`))
 
-	// Conditional target type for CPU/memory
-	assert.Contains(t, cue, `if parameter.cpu.type == "Utilization"`)
-	assert.Contains(t, cue, `averageUtilization: parameter.cpu.value`)
-	assert.Contains(t, cue, `if parameter.cpu.type == "AverageValue"`)
-	assert.Contains(t, cue, `averageValue: parameter.cpu.value`)
+		// Conditional target type for CPU/memory
+		Expect(cue).To(ContainSubstring(`if parameter.cpu.type == "Utilization"`))
+		Expect(cue).To(ContainSubstring(`averageUtilization: parameter.cpu.value`))
+		Expect(cue).To(ContainSubstring(`if parameter.cpu.type == "AverageValue"`))
+		Expect(cue).To(ContainSubstring(`averageValue: parameter.cpu.value`))
 
-	// Parameters
-	assert.Contains(t, cue, `min: *1 | int`)
-	assert.Contains(t, cue, `max: *10 | int`)
-	assert.Contains(t, cue, `targetAPIVersion: *"apps/v1" | string`)
-	assert.Contains(t, cue, `targetKind: *"Deployment" | string`)
-	assert.Contains(t, cue, `mem?:`)
-	assert.Contains(t, cue, `podCustomMetrics?:`)
-}
+		// Parameters
+		Expect(cue).To(ContainSubstring(`min: *1 | int`))
+		Expect(cue).To(ContainSubstring(`max: *10 | int`))
+		Expect(cue).To(ContainSubstring(`targetAPIVersion: *"apps/v1" | string`))
+		Expect(cue).To(ContainSubstring(`targetKind: *"Deployment" | string`))
+		Expect(cue).To(ContainSubstring(`mem?:`))
+		Expect(cue).To(ContainSubstring(`podCustomMetrics?:`))
+	})
+})

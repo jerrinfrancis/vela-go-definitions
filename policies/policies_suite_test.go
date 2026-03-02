@@ -14,28 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits_test
+package policies_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-var _ = Describe("Labels", func() {
-	It("should have correct name and CUE output", func() {
-		trait := traits.Labels()
-
-		Expect(trait.GetName()).To(Equal("labels"))
-
-		cue := trait.ToCue()
-
-		// Verify raw CUE content is present
-		Expect(cue).To(ContainSubstring(`type: "trait"`))
-		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
-		Expect(cue).To(ContainSubstring(`appliesToWorkloads: ["*"]`))
-		Expect(cue).To(ContainSubstring(`for k, v in parameter`))
-		Expect(cue).To(ContainSubstring(`parameter: [string]: string | null`))
-	})
-})
+func TestPolicies(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Policies Suite")
+}

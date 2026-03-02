@@ -14,41 +14,44 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestHostAliasTrait(t *testing.T) {
-	cue := HostAlias().ToCue()
+var _ = Describe("HostAlias", func() {
+	It("should have correct name and CUE output", func() {
+		cue := traits.HostAlias().ToCue()
 
-	// Metadata
-	assert.Contains(t, cue, `hostalias: {`)
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `description: "Add host aliases on K8s pod for your workload which follows the pod spec in path 'spec.template'."`)
-	assert.Contains(t, cue, `podDisruptive: false`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Metadata
+		Expect(cue).To(ContainSubstring(`hostalias: {`))
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`description: "Add host aliases on K8s pod for your workload which follows the pod spec in path 'spec.template'."`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: false`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// Patch block: patchKey annotation and direct array assignment (no wrapping)
-	assert.Contains(t, cue, `// +patchKey=ip`)
-	assert.Contains(t, cue, `hostAliases: parameter.hostAliases`)
-	// Should NOT wrap in array brackets
-	assert.NotContains(t, cue, `[parameter.hostAliases]`)
+		// Patch block: patchKey annotation and direct array assignment (no wrapping)
+		Expect(cue).To(ContainSubstring(`// +patchKey=ip`))
+		Expect(cue).To(ContainSubstring(`hostAliases: parameter.hostAliases`))
+		// Should NOT wrap in array brackets
+		Expect(cue).NotTo(ContainSubstring(`[parameter.hostAliases]`))
 
-	// Parameter block: hostAliases should be required (no ?)
-	assert.Contains(t, cue, "hostAliases: [...{")
-	assert.NotContains(t, cue, "hostAliases?: [...{")
+		// Parameter block: hostAliases should be required (no ?)
+		Expect(cue).To(ContainSubstring("hostAliases: [...{"))
+		Expect(cue).NotTo(ContainSubstring("hostAliases?: [...{"))
 
-	// Struct fields inside hostAliases
-	assert.Contains(t, cue, `ip: string`)
-	assert.Contains(t, cue, `hostnames: [...string]`)
+		// Struct fields inside hostAliases
+		Expect(cue).To(ContainSubstring(`ip: string`))
+		Expect(cue).To(ContainSubstring(`hostnames: [...string]`))
 
-	// Description
-	assert.Contains(t, cue, `// +usage=Specify the hostAliases to add`)
-}
+		// Description
+		Expect(cue).To(ContainSubstring(`// +usage=Specify the hostAliases to add`))
+	})
+})

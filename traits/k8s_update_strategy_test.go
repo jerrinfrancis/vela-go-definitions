@@ -14,45 +14,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestK8sUpdateStrategyTrait(t *testing.T) {
-	trait := K8sUpdateStrategy()
+var _ = Describe("K8sUpdateStrategy", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.K8sUpdateStrategy()
 
-	assert.Equal(t, "k8s-update-strategy", trait.GetName())
-	assert.Equal(t, "Set k8s update strategy for Deployment/DaemonSet/StatefulSet", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("k8s-update-strategy"))
+		Expect(trait.GetDescription()).To(Equal("Set k8s update strategy for Deployment/DaemonSet/StatefulSet"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Three separate conditional blocks for each workload type
-	assert.Contains(t, cue, `parameter.targetKind == "Deployment" && parameter.strategy.type != "OnDelete"`)
-	assert.Contains(t, cue, `parameter.targetKind == "StatefulSet" && parameter.strategy.type != "Recreate"`)
-	assert.Contains(t, cue, `parameter.targetKind == "DaemonSet" && parameter.strategy.type != "Recreate"`)
+		// Three separate conditional blocks for each workload type
+		Expect(cue).To(ContainSubstring(`parameter.targetKind == "Deployment" && parameter.strategy.type != "OnDelete"`))
+		Expect(cue).To(ContainSubstring(`parameter.targetKind == "StatefulSet" && parameter.strategy.type != "Recreate"`))
+		Expect(cue).To(ContainSubstring(`parameter.targetKind == "DaemonSet" && parameter.strategy.type != "Recreate"`))
 
-	// Three patchStrategy annotations
-	assert.Equal(t, 3, strings.Count(cue, "// +patchStrategy=retainKeys"))
+		// Three patchStrategy annotations
+		Expect(strings.Count(cue, "// +patchStrategy=retainKeys")).To(Equal(3))
 
-	// Deployment uses "strategy", StatefulSet/DaemonSet use "updateStrategy"
-	assert.Contains(t, cue, "strategy: {")
-	assert.Contains(t, cue, "updateStrategy: {")
+		// Deployment uses "strategy", StatefulSet/DaemonSet use "updateStrategy"
+		Expect(cue).To(ContainSubstring("strategy: {"))
+		Expect(cue).To(ContainSubstring("updateStrategy: {"))
 
-	// Inner RollingUpdate condition
-	assert.Contains(t, cue, `parameter.strategy.type == "RollingUpdate"`)
+		// Inner RollingUpdate condition
+		Expect(cue).To(ContainSubstring(`parameter.strategy.type == "RollingUpdate"`))
 
-	// Correct field assignments
-	assert.Contains(t, cue, "maxSurge:       parameter.strategy.rollingStrategy.maxSurge")
-	assert.Contains(t, cue, "maxUnavailable: parameter.strategy.rollingStrategy.maxUnavailable")
-	assert.Contains(t, cue, "partition: parameter.strategy.rollingStrategy.partition")
+		// Correct field assignments
+		Expect(cue).To(ContainSubstring("maxSurge:       parameter.strategy.rollingStrategy.maxSurge"))
+		Expect(cue).To(ContainSubstring("maxUnavailable: parameter.strategy.rollingStrategy.maxUnavailable"))
+		Expect(cue).To(ContainSubstring("partition: parameter.strategy.rollingStrategy.partition"))
 
-	// Parameters
-	assert.Contains(t, cue, `targetAPIVersion: *"apps/v1" | string`)
-	assert.Contains(t, cue, `targetKind: *"Deployment" | "StatefulSet" | "DaemonSet"`)
-	assert.Contains(t, cue, `type: *"RollingUpdate" | "Recreate" | "OnDelete"`)
-}
+		// Parameters
+		Expect(cue).To(ContainSubstring(`targetAPIVersion: *"apps/v1" | string`))
+		Expect(cue).To(ContainSubstring(`targetKind: *"Deployment" | "StatefulSet" | "DaemonSet"`))
+		Expect(cue).To(ContainSubstring(`type: *"RollingUpdate" | "Recreate" | "OnDelete"`))
+	})
+})

@@ -14,142 +14,129 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"strings"
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestAllTraitsRegistered(t *testing.T) {
-	// Test that all traits can be created and produce valid CUE
-	traits := []struct {
+var _ = Describe("All Traits Registered", func() {
+	type traitEntry struct {
 		name   string
-		create func() *trait
-	}{
-		{"scaler", func() *trait { return &trait{Scaler()} }},
-		{"labels", func() *trait { return &trait{Labels()} }},
-		{"annotations", func() *trait { return &trait{Annotations()} }},
-		{"expose", func() *trait { return &trait{Expose()} }},
-		{"sidecar", func() *trait { return &trait{Sidecar()} }},
-		{"env", func() *trait { return &trait{Env()} }},
-		{"resource", func() *trait { return &trait{Resource()} }},
-		{"affinity", func() *trait { return &trait{Affinity()} }},
-		{"hpa", func() *trait { return &trait{HPA()} }},
-		{"init-container", func() *trait { return &trait{InitContainer()} }},
-		{"service-account", func() *trait { return &trait{ServiceAccount()} }},
-		{"gateway", func() *trait { return &trait{Gateway()} }},
-		{"service-binding", func() *trait { return &trait{ServiceBinding()} }},
-		{"startup-probe", func() *trait { return &trait{StartupProbe()} }},
-		{"securitycontext", func() *trait { return &trait{SecurityContext()} }},
-		{"container-image", func() *trait { return &trait{ContainerImage()} }},
+		toCue  func() string
 	}
 
-	for _, tc := range traits {
-		t.Run(tc.name, func(t *testing.T) {
-			tr := tc.create()
-			cue := tr.ToCue()
-			if cue == "" {
-				t.Error("ToCue() returned empty string")
-			}
-			if !strings.Contains(cue, "{") || !strings.Contains(cue, "}") {
-				t.Error("CUE output is not well-formed (missing braces)")
-			}
+	allTraits := []traitEntry{
+		{"scaler", func() string { return traits.Scaler().ToCue() }},
+		{"labels", func() string { return traits.Labels().ToCue() }},
+		{"annotations", func() string { return traits.Annotations().ToCue() }},
+		{"expose", func() string { return traits.Expose().ToCue() }},
+		{"sidecar", func() string { return traits.Sidecar().ToCue() }},
+		{"env", func() string { return traits.Env().ToCue() }},
+		{"resource", func() string { return traits.Resource().ToCue() }},
+		{"affinity", func() string { return traits.Affinity().ToCue() }},
+		{"hpa", func() string { return traits.HPA().ToCue() }},
+		{"init-container", func() string { return traits.InitContainer().ToCue() }},
+		{"service-account", func() string { return traits.ServiceAccount().ToCue() }},
+		{"gateway", func() string { return traits.Gateway().ToCue() }},
+		{"service-binding", func() string { return traits.ServiceBinding().ToCue() }},
+		{"startup-probe", func() string { return traits.StartupProbe().ToCue() }},
+		{"securitycontext", func() string { return traits.SecurityContext().ToCue() }},
+		{"container-image", func() string { return traits.ContainerImage().ToCue() }},
+	}
+
+	for _, tc := range allTraits {
+		It("should produce valid CUE for "+tc.name, func() {
+			cue := tc.toCue()
+			Expect(cue).NotTo(BeEmpty())
+			Expect(cue).To(ContainSubstring("{"))
+			Expect(cue).To(ContainSubstring("}"))
 		})
 	}
-}
+})
 
-// TestPatchFieldBuilderPatterns verifies that the PatchField builder methods
+// PatchFieldBuilderPatterns verifies that the PatchField builder methods
 // (.IsSet(), .NotEmpty(), .Default(), .Int(), .Bool(), .StringArray(), .Target(), .Strategy())
 // used in the three PatchContainer-based traits produce the correct CUE output patterns.
-func TestPatchFieldBuilderPatterns(t *testing.T) {
-	t.Run("IsSet generates != _|_ guard and optional param syntax", func(t *testing.T) {
-		cue := StartupProbe().ToCue()
+var _ = Describe("PatchField Builder Patterns", func() {
+	Context("IsSet generates != _|_ guard and optional param syntax", func() {
+		It("should produce correct CUE patterns", func() {
+			cue := traits.StartupProbe().ToCue()
 
-		// .IsSet() alone → optional param (field?: type) + guarded in PatchContainer body
-		assert.Contains(t, cue, `exec?: {`, "IsSet() should make field optional in param schema")
-		assert.Contains(t, cue, `if _params.exec != _|_`, "IsSet() should guard field in PatchContainer body")
+			// .IsSet() alone → optional param (field?: type) + guarded in PatchContainer body
+			Expect(cue).To(ContainSubstring(`exec?: {`))
+			Expect(cue).To(ContainSubstring(`if _params.exec != _|_`))
 
-		// .Int().IsSet() → optional int param + guarded
-		assert.Contains(t, cue, `terminationGracePeriodSeconds?: int`, "Int().IsSet() should produce optional int")
-		assert.Contains(t, cue, `if _params.terminationGracePeriodSeconds != _|_`, "Int().IsSet() should guard field")
+			// .Int().IsSet() → optional int param + guarded
+			Expect(cue).To(ContainSubstring(`terminationGracePeriodSeconds?: int`))
+			Expect(cue).To(ContainSubstring(`if _params.terminationGracePeriodSeconds != _|_`))
 
-		// .Int().IsSet().Default("0") → default value in param + guarded in PatchContainer body
-		assert.Contains(t, cue, `initialDelaySeconds: *0 | int`, "Int().IsSet().Default() should produce default in param schema")
-		assert.Contains(t, cue, `if _params.initialDelaySeconds != _|_`, "Int().IsSet().Default() should still guard in PatchContainer body")
+			// .Int().IsSet().Default("0") → default value in param + guarded in PatchContainer body
+			Expect(cue).To(ContainSubstring(`initialDelaySeconds: *0 | int`))
+			Expect(cue).To(ContainSubstring(`if _params.initialDelaySeconds != _|_`))
+		})
 	})
 
-	t.Run("Default without IsSet generates unguarded assignment", func(t *testing.T) {
-		cue := SecurityContext().ToCue()
+	Context("Default without IsSet generates unguarded assignment", func() {
+		It("should produce correct CUE patterns", func() {
+			cue := traits.SecurityContext().ToCue()
 
-		// .Bool().Default("false") → default value, no guard in PatchContainer body
-		assert.Contains(t, cue, `allowPrivilegeEscalation: *false | bool`, "Bool().Default() should produce default in param schema")
-		assert.Contains(t, cue, `allowPrivilegeEscalation: _params.allowPrivilegeEscalation`,
-			"Bool().Default() without IsSet() should produce unconditional assignment in PatchContainer body")
+			// .Bool().Default("false") → default value, no guard in PatchContainer body
+			Expect(cue).To(ContainSubstring(`allowPrivilegeEscalation: *false | bool`))
+			Expect(cue).To(ContainSubstring(`allowPrivilegeEscalation: _params.allowPrivilegeEscalation`))
 
-		// .Int().IsSet() → optional, guarded
-		assert.Contains(t, cue, `runAsUser?: int`, "Int().IsSet() should produce optional param")
-		assert.Contains(t, cue, `if _params.runAsUser != _|_`, "Int().IsSet() should produce guarded assignment")
+			// .Int().IsSet() → optional, guarded
+			Expect(cue).To(ContainSubstring(`runAsUser?: int`))
+			Expect(cue).To(ContainSubstring(`if _params.runAsUser != _|_`))
+		})
 	})
 
-	t.Run("Target remaps param name to different container field", func(t *testing.T) {
-		cue := SecurityContext().ToCue()
+	Context("Target remaps param name to different container field", func() {
+		It("should produce correct CUE patterns", func() {
+			cue := traits.SecurityContext().ToCue()
 
-		// .Target("add") maps addCapabilities param → add field in container
-		assert.Contains(t, cue, `addCapabilities?: [...string]`, "param should use builder name (addCapabilities)")
-		assert.Contains(t, cue, `add: _params.addCapabilities`, "Target() should remap to 'add' in PatchContainer body")
+			// .Target("add") maps addCapabilities param → add field in container
+			Expect(cue).To(ContainSubstring(`addCapabilities?: [...string]`))
+			Expect(cue).To(ContainSubstring(`add: _params.addCapabilities`))
 
-		// .Target("drop") maps dropCapabilities param → drop field in container
-		assert.Contains(t, cue, `dropCapabilities?: [...string]`, "param should use builder name (dropCapabilities)")
-		assert.Contains(t, cue, `drop: _params.dropCapabilities`, "Target() should remap to 'drop' in PatchContainer body")
+			// .Target("drop") maps dropCapabilities param → drop field in container
+			Expect(cue).To(ContainSubstring(`dropCapabilities?: [...string]`))
+			Expect(cue).To(ContainSubstring(`drop: _params.dropCapabilities`))
+		})
 	})
 
-	t.Run("NotEmpty generates != empty string guard", func(t *testing.T) {
-		cue := ContainerImage().ToCue()
+	Context("NotEmpty generates != empty string guard", func() {
+		It("should produce correct CUE patterns", func() {
+			cue := traits.ContainerImage().ToCue()
 
-		// .NotEmpty() → guarded with != "" in PatchContainer body
-		assert.Contains(t, cue, `if _params.imagePullPolicy != ""`,
-			"NotEmpty() should guard with != empty string in PatchContainer body")
+			// .NotEmpty() → guarded with != "" in PatchContainer body
+			Expect(cue).To(ContainSubstring(`if _params.imagePullPolicy != ""`))
 
-		// .NotEmpty() should NOT make the field optional (no ? suffix)
-		// imagePullPolicy has a default of "" so it appears as: imagePullPolicy: *"" | ...
-		assert.Contains(t, cue, `imagePullPolicy: *""`,
-			"NotEmpty() field should have empty string default, not be optional")
-		assert.NotContains(t, cue, `imagePullPolicy?:`,
-			"NotEmpty() should NOT make field optional")
+			// .NotEmpty() should NOT make the field optional (no ? suffix)
+			Expect(cue).To(ContainSubstring(`imagePullPolicy: *""`))
+			Expect(cue).NotTo(ContainSubstring(`imagePullPolicy?:`))
+		})
 	})
 
-	t.Run("Strategy generates patchStrategy annotation", func(t *testing.T) {
-		cue := ContainerImage().ToCue()
+	Context("Strategy generates patchStrategy annotation", func() {
+		It("should produce correct CUE patterns", func() {
+			cue := traits.ContainerImage().ToCue()
 
-		// .Strategy("retainKeys") → // +patchStrategy=retainKeys annotation
-		assert.Contains(t, cue, `// +patchStrategy=retainKeys`,
-			"Strategy() should produce patchStrategy annotation")
+			// .Strategy("retainKeys") → // +patchStrategy=retainKeys annotation
+			Expect(cue).To(ContainSubstring(`// +patchStrategy=retainKeys`))
+		})
 	})
 
-	t.Run("StringArray generates typed array", func(t *testing.T) {
-		cue := SecurityContext().ToCue()
+	Context("StringArray generates typed array", func() {
+		It("should produce correct CUE patterns", func() {
+			cue := traits.SecurityContext().ToCue()
 
-		// .StringArray().IsSet() → optional typed array
-		assert.Contains(t, cue, `addCapabilities?: [...string]`, "StringArray().IsSet() should produce optional string array")
-		assert.Contains(t, cue, `dropCapabilities?: [...string]`, "StringArray().IsSet() should produce optional string array")
+			// .StringArray().IsSet() → optional typed array
+			Expect(cue).To(ContainSubstring(`addCapabilities?: [...string]`))
+			Expect(cue).To(ContainSubstring(`dropCapabilities?: [...string]`))
+		})
 	})
-}
-
-// trait wraps a TraitDefinition for testing
-type trait struct {
-	def interface {
-		GetName() string
-		ToCue() string
-	}
-}
-
-func (t *trait) GetName() string {
-	return t.def.GetName()
-}
-
-func (t *trait) ToCue() string {
-	return t.def.ToCue()
-}
+})

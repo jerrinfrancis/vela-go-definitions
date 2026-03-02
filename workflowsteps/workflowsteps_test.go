@@ -14,102 +14,87 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package workflowsteps
+package workflowsteps_test
 
 import (
-	"strings"
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/workflowsteps"
 )
 
-func TestDeployWorkflowStep(t *testing.T) {
-	step := Deploy()
+var _ = Describe("Deploy WorkflowStep", func() {
+	It("should have correct name and CUE output", func() {
+		step := workflowsteps.Deploy()
 
-	assert.Equal(t, "deploy", step.GetName())
-	assert.Equal(t, "A powerful and unified deploy step for components multi-cluster delivery with policies.", step.GetDescription())
+		Expect(step.GetName()).To(Equal("deploy"))
+		Expect(step.GetDescription()).To(Equal("A powerful and unified deploy step for components multi-cluster delivery with policies."))
 
-	cue := step.ToCue()
+		cue := step.ToCue()
 
-	// Verify key elements are present
-	assert.Contains(t, cue, `type: "workflow-step"`)
-	assert.Contains(t, cue, `"category": "Application Delivery"`)
-	assert.Contains(t, cue, `"scope": "Application"`)
-	assert.Contains(t, cue, `auto: *true | bool`)
-	assert.Contains(t, cue, `policies:`)
-	assert.Contains(t, cue, `parallelism: *5 | int`)
-	assert.Contains(t, cue, `ignoreTerraformComponent: *true | bool`)
-	assert.Contains(t, cue, `multicluster.#Deploy`)
-	assert.Contains(t, cue, `builtin.#Suspend`)
-}
+		Expect(cue).To(ContainSubstring(`type: "workflow-step"`))
+		Expect(cue).To(ContainSubstring(`"category": "Application Delivery"`))
+		Expect(cue).To(ContainSubstring(`"scope": "Application"`))
+		Expect(cue).To(ContainSubstring(`auto: *true | bool`))
+		Expect(cue).To(ContainSubstring(`policies:`))
+		Expect(cue).To(ContainSubstring(`parallelism: *5 | int`))
+		Expect(cue).To(ContainSubstring(`ignoreTerraformComponent: *true | bool`))
+		Expect(cue).To(ContainSubstring(`multicluster.#Deploy`))
+		Expect(cue).To(ContainSubstring(`builtin.#Suspend`))
+	})
+})
 
-func TestSuspendWorkflowStep(t *testing.T) {
-	step := Suspend()
+var _ = Describe("Suspend WorkflowStep", func() {
+	It("should have correct name and CUE output", func() {
+		step := workflowsteps.Suspend()
 
-	assert.Equal(t, "suspend", step.GetName())
+		Expect(step.GetName()).To(Equal("suspend"))
 
-	cue := step.ToCue()
+		cue := step.ToCue()
 
-	// Verify key elements are present
-	assert.Contains(t, cue, `type: "workflow-step"`)
-	assert.Contains(t, cue, `"category": "Process Control"`)
-	assert.Contains(t, cue, `builtin.#Suspend`)
-	assert.Contains(t, cue, `duration?:`)
-	assert.Contains(t, cue, `message?:`)
-}
+		Expect(cue).To(ContainSubstring(`type: "workflow-step"`))
+		Expect(cue).To(ContainSubstring(`"category": "Process Control"`))
+		Expect(cue).To(ContainSubstring(`builtin.#Suspend`))
+		Expect(cue).To(ContainSubstring(`duration?:`))
+		Expect(cue).To(ContainSubstring(`message?:`))
+	})
+})
 
-func TestApplyComponentWorkflowStep(t *testing.T) {
-	step := ApplyComponent()
+var _ = Describe("ApplyComponent WorkflowStep", func() {
+	It("should have correct name and CUE output", func() {
+		step := workflowsteps.ApplyComponent()
 
-	assert.Equal(t, "apply-component", step.GetName())
+		Expect(step.GetName()).To(Equal("apply-component"))
 
-	cue := step.ToCue()
+		cue := step.ToCue()
 
-	// Verify key elements are present
-	assert.Contains(t, cue, `type: "workflow-step"`)
-	assert.Contains(t, cue, `"category": "Application Delivery"`)
-	assert.Contains(t, cue, `"scope": "Application"`)
-	assert.Contains(t, cue, `component:`)
-	assert.Contains(t, cue, `cluster:`)
-	assert.Contains(t, cue, `namespace:`)
-}
+		Expect(cue).To(ContainSubstring(`type: "workflow-step"`))
+		Expect(cue).To(ContainSubstring(`"category": "Application Delivery"`))
+		Expect(cue).To(ContainSubstring(`"scope": "Application"`))
+		Expect(cue).To(ContainSubstring(`component:`))
+		Expect(cue).To(ContainSubstring(`cluster:`))
+		Expect(cue).To(ContainSubstring(`namespace:`))
+	})
+})
 
-func TestAllWorkflowStepsRegistered(t *testing.T) {
-	// Test that all workflow steps can be created and produce valid CUE
-	steps := []struct {
-		name   string
-		create func() *step
-	}{
-		{"deploy", func() *step { return &step{Deploy()} }},
-		{"suspend", func() *step { return &step{Suspend()} }},
-		{"apply-component", func() *step { return &step{ApplyComponent()} }},
+var _ = Describe("All WorkflowSteps Registered", func() {
+	type stepEntry struct {
+		name  string
+		toCue func() string
 	}
 
-	for _, tc := range steps {
-		t.Run(tc.name, func(t *testing.T) {
-			s := tc.create()
-			cue := s.ToCue()
-			assert.NotEmpty(t, cue)
+	allSteps := []stepEntry{
+		{"deploy", func() string { return workflowsteps.Deploy().ToCue() }},
+		{"suspend", func() string { return workflowsteps.Suspend().ToCue() }},
+		{"apply-component", func() string { return workflowsteps.ApplyComponent().ToCue() }},
+	}
 
-			// Verify CUE is well-formed (has opening/closing braces)
-			assert.True(t, strings.Contains(cue, "{"))
-			assert.True(t, strings.Contains(cue, "}"))
+	for _, tc := range allSteps {
+		It("should produce valid CUE for "+tc.name, func() {
+			cue := tc.toCue()
+			Expect(cue).NotTo(BeEmpty())
+			Expect(cue).To(ContainSubstring("{"))
+			Expect(cue).To(ContainSubstring("}"))
 		})
 	}
-}
-
-// step wraps a WorkflowStepDefinition for testing
-type step struct {
-	def interface {
-		GetName() string
-		ToCue() string
-	}
-}
-
-func (s *step) GetName() string {
-	return s.def.GetName()
-}
-
-func (s *step) ToCue() string {
-	return s.def.ToCue()
-}
+})

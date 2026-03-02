@@ -14,67 +14,62 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestTopologySpreadConstraintsTrait(t *testing.T) {
-	trait := TopologySpreadConstraints()
+var _ = Describe("TopologySpreadConstraints Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.TopologySpreadConstraints()
 
-	assert.Equal(t, "topologyspreadconstraints", trait.GetName())
+		Expect(trait.GetName()).To(Equal("topologyspreadconstraints"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Metadata
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Metadata
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// Bug 1 fix: constraints array should be required (no ?)
-	assert.Contains(t, cue, "constraints: [...{",
-		"constraints should be required, not optional")
-	assert.NotContains(t, cue, "constraints?: [...{",
-		"constraints should NOT be optional")
+		// Bug 1 fix: constraints array should be required (no ?)
+		Expect(cue).To(ContainSubstring("constraints: [...{"))
+		Expect(cue).NotTo(ContainSubstring("constraints?: [...{"))
 
-	// Bug 2 fix: labelSelector should be required and reference #labSelector helper
-	assert.Contains(t, cue, "labelSelector: #labSelector",
-		"labelSelector should reference #labSelector helper")
+		// Bug 2 fix: labelSelector should be required and reference #labSelector helper
+		Expect(cue).To(ContainSubstring("labelSelector: #labSelector"))
 
-	// Helper type definition should exist as closed struct
-	assert.Contains(t, cue, "#labSelector: {",
-		"#labSelector helper type should be defined")
+		// Helper type definition should exist as closed struct
+		Expect(cue).To(ContainSubstring("#labSelector: {"))
 
-	// Bug 3 fix: nodeAffinityPolicy and nodeTaintsPolicy should be optional WITH default
-	assert.Contains(t, cue, `nodeAffinityPolicy?: *"Honor" | "Ignore"`,
-		"nodeAffinityPolicy should be optional with *Honor default")
-	assert.Contains(t, cue, `nodeTaintsPolicy?: *"Honor" | "Ignore"`,
-		"nodeTaintsPolicy should be optional with *Honor default")
-	// Must NOT be required (without ?)
-	assert.NotContains(t, cue, `nodeAffinityPolicy: *"Honor"`,
-		"nodeAffinityPolicy should NOT be required")
-	assert.NotContains(t, cue, `nodeTaintsPolicy: *"Honor"`,
-		"nodeTaintsPolicy should NOT be required")
+		// Bug 3 fix: nodeAffinityPolicy and nodeTaintsPolicy should be optional WITH default
+		Expect(cue).To(ContainSubstring(`nodeAffinityPolicy?: *"Honor" | "Ignore"`))
+		Expect(cue).To(ContainSubstring(`nodeTaintsPolicy?: *"Honor" | "Ignore"`))
+		// Must NOT be required (without ?)
+		Expect(cue).NotTo(ContainSubstring(`nodeAffinityPolicy: *"Honor"`))
+		Expect(cue).NotTo(ContainSubstring(`nodeTaintsPolicy: *"Honor"`))
 
-	// Other parameter fields
-	assert.Contains(t, cue, `maxSkew: int`)
-	assert.Contains(t, cue, `topologyKey: string`)
-	assert.Contains(t, cue, `whenUnsatisfiable: *"DoNotSchedule" | "ScheduleAnyway"`)
-	assert.Contains(t, cue, `minDomains?: int`)
-	assert.Contains(t, cue, `matchLabelKeys?: [...string]`)
-	assert.Contains(t, cue, `matchLabels?: [string]: string`)
-	assert.Contains(t, cue, `operator: *"In" | "NotIn" | "Exists" | "DoesNotExist"`)
-	assert.Contains(t, cue, `values?: [...string]`)
+		// Other parameter fields
+		Expect(cue).To(ContainSubstring(`maxSkew: int`))
+		Expect(cue).To(ContainSubstring(`topologyKey: string`))
+		Expect(cue).To(ContainSubstring(`whenUnsatisfiable: *"DoNotSchedule" | "ScheduleAnyway"`))
+		Expect(cue).To(ContainSubstring(`minDomains?: int`))
+		Expect(cue).To(ContainSubstring(`matchLabelKeys?: [...string]`))
+		Expect(cue).To(ContainSubstring(`matchLabels?: [string]: string`))
+		Expect(cue).To(ContainSubstring(`operator: *"In" | "NotIn" | "Exists" | "DoesNotExist"`))
+		Expect(cue).To(ContainSubstring(`values?: [...string]`))
 
-	// Template: conditional field guards for optional fields
-	assert.Contains(t, cue, `if v.nodeAffinityPolicy != _|_`)
-	assert.Contains(t, cue, `if v.nodeTaintsPolicy != _|_`)
-	assert.Contains(t, cue, `if v.minDomains != _|_`)
-	assert.Contains(t, cue, `if v.matchLabelKeys != _|_`)
-}
+		// Template: conditional field guards for optional fields
+		Expect(cue).To(ContainSubstring(`if v.nodeAffinityPolicy != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.nodeTaintsPolicy != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.minDomains != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.matchLabelKeys != _|_`))
+	})
+})

@@ -14,65 +14,69 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestInitContainerTrait(t *testing.T) {
-	trait := InitContainer()
+var _ = Describe("InitContainer", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.InitContainer()
 
-	assert.Equal(t, "init-container", trait.GetName())
-	assert.Equal(t, "add an init container and use shared volume with pod", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("init-container"))
+		Expect(trait.GetDescription()).To(Equal("add an init container and use shared volume with pod"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `"daemonsets.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"daemonsets.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// Patch structure with multiple patchKey annotations
-	assert.Contains(t, cue, `patch: spec: template: spec:`)
-	assert.True(t, strings.Count(cue, `// +patchKey=name`) >= 4, "expected at least 4 patchKey=name annotations")
+		// Patch structure with multiple patchKey annotations
+		Expect(cue).To(ContainSubstring(`patch: spec: template: spec:`))
+		Expect(strings.Count(cue, `// +patchKey=name`)).To(BeNumerically(">=", 4))
 
-	// Containers with shared volume mount
-	assert.Contains(t, cue, `containers:`)
-	assert.Contains(t, cue, `name: context.name`)
-	assert.Contains(t, cue, `parameter.appMountPath`)
+		// Containers with shared volume mount
+		Expect(cue).To(ContainSubstring(`containers:`))
+		Expect(cue).To(ContainSubstring(`name: context.name`))
+		Expect(cue).To(ContainSubstring(`parameter.appMountPath`))
 
-	// Init container with conditional fields
-	assert.Contains(t, cue, `initContainers:`)
-	assert.Contains(t, cue, `parameter.image`)
-	assert.Contains(t, cue, `parameter.imagePullPolicy`)
-	assert.Contains(t, cue, `if parameter["cmd"] != _|_`)
-	assert.Contains(t, cue, `if parameter["args"] != _|_`)
-	assert.Contains(t, cue, `if parameter["env"] != _|_`)
+		// Init container with conditional fields
+		Expect(cue).To(ContainSubstring(`initContainers:`))
+		Expect(cue).To(ContainSubstring(`parameter.image`))
+		Expect(cue).To(ContainSubstring(`parameter.imagePullPolicy`))
+		Expect(cue).To(ContainSubstring(`if parameter["cmd"] != _|_`))
+		Expect(cue).To(ContainSubstring(`if parameter["args"] != _|_`))
+		Expect(cue).To(ContainSubstring(`if parameter["env"] != _|_`))
 
-	// Array concatenation for volumeMounts
-	assert.Contains(t, cue, `] + parameter.extraVolumeMounts`)
+		// Array concatenation for volumeMounts
+		Expect(cue).To(ContainSubstring(`] + parameter.extraVolumeMounts`))
 
-	// Volumes
-	assert.Contains(t, cue, `volumes:`)
-	assert.Contains(t, cue, `emptyDir: {}`)
+		// Volumes
+		Expect(cue).To(ContainSubstring(`volumes:`))
+		Expect(cue).To(ContainSubstring(`emptyDir: {}`))
 
-	// Parameters
-	assert.Contains(t, cue, `name: string`)
-	assert.Contains(t, cue, `image: string`)
-	assert.Contains(t, cue, `imagePullPolicy: *"IfNotPresent"`)
-	assert.Contains(t, cue, `cmd?: [...string]`)
-	assert.Contains(t, cue, `args?: [...string]`)
-	assert.Contains(t, cue, `mountName: *"workdir" | string`)
-	assert.Contains(t, cue, `appMountPath: string`)
-	assert.Contains(t, cue, `initMountPath: string`)
-	assert.Contains(t, cue, `extraVolumeMounts:`)
-	assert.Contains(t, cue, `secretKeyRef?:`)
-	assert.Contains(t, cue, `configMapKeyRef?:`)
-}
+		// Parameters
+		Expect(cue).To(ContainSubstring(`name: string`))
+		Expect(cue).To(ContainSubstring(`image: string`))
+		Expect(cue).To(ContainSubstring(`imagePullPolicy: *"IfNotPresent"`))
+		Expect(cue).To(ContainSubstring(`cmd?: [...string]`))
+		Expect(cue).To(ContainSubstring(`args?: [...string]`))
+		Expect(cue).To(ContainSubstring(`mountName: *"workdir" | string`))
+		Expect(cue).To(ContainSubstring(`appMountPath: string`))
+		Expect(cue).To(ContainSubstring(`initMountPath: string`))
+		Expect(cue).To(ContainSubstring(`extraVolumeMounts:`))
+		Expect(cue).To(ContainSubstring(`secretKeyRef?:`))
+		Expect(cue).To(ContainSubstring(`configMapKeyRef?:`))
+	})
+})

@@ -14,68 +14,71 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestServiceAccountTrait(t *testing.T) {
-	trait := ServiceAccount()
+var _ = Describe("ServiceAccount Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.ServiceAccount()
 
-	assert.Equal(t, "service-account", trait.GetName())
+		Expect(trait.GetName()).To(Equal("service-account"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: false`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"jobs.batch"`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: false`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"jobs.batch"`))
 
-	// Let bindings for filtered privilege arrays
-	assert.Contains(t, cue, `let _clusterPrivileges =`)
-	assert.Contains(t, cue, `let _namespacePrivileges =`)
-	assert.Contains(t, cue, `v.scope == "cluster"`)
-	assert.Contains(t, cue, `v.scope == "namespace"`)
+		// Let bindings for filtered privilege arrays
+		Expect(cue).To(ContainSubstring(`let _clusterPrivileges =`))
+		Expect(cue).To(ContainSubstring(`let _namespacePrivileges =`))
+		Expect(cue).To(ContainSubstring(`v.scope == "cluster"`))
+		Expect(cue).To(ContainSubstring(`v.scope == "namespace"`))
 
-	// Patch
-	assert.Contains(t, cue, `// +patchStrategy=retainKeys`)
-	assert.Contains(t, cue, `serviceAccountName: parameter.name`)
+		// Patch
+		Expect(cue).To(ContainSubstring(`// +patchStrategy=retainKeys`))
+		Expect(cue).To(ContainSubstring(`serviceAccountName: parameter.name`))
 
-	// Conditional ServiceAccount output
-	assert.Contains(t, cue, `if parameter.create`)
-	assert.Contains(t, cue, `"service-account":`)
-	assert.Contains(t, cue, `kind:       "ServiceAccount"`)
+		// Conditional ServiceAccount output
+		Expect(cue).To(ContainSubstring(`if parameter.create`))
+		Expect(cue).To(ContainSubstring(`"service-account":`))
+		Expect(cue).To(ContainSubstring(`kind:       "ServiceAccount"`))
 
-	// Conditional cluster-scoped RBAC output group
-	assert.Contains(t, cue, `len(_clusterPrivileges) > 0`)
-	assert.Contains(t, cue, `"cluster-role":`)
-	assert.Contains(t, cue, `kind:       "ClusterRole"`)
-	assert.Contains(t, cue, `"cluster-role-binding":`)
-	assert.Contains(t, cue, `kind:       "ClusterRoleBinding"`)
+		// Conditional cluster-scoped RBAC output group
+		Expect(cue).To(ContainSubstring(`len(_clusterPrivileges) > 0`))
+		Expect(cue).To(ContainSubstring(`"cluster-role":`))
+		Expect(cue).To(ContainSubstring(`kind:       "ClusterRole"`))
+		Expect(cue).To(ContainSubstring(`"cluster-role-binding":`))
+		Expect(cue).To(ContainSubstring(`kind:       "ClusterRoleBinding"`))
 
-	// Conditional namespace-scoped RBAC output group
-	assert.Contains(t, cue, `len(_namespacePrivileges) > 0`)
-	assert.Contains(t, cue, `kind:       "Role"`)
-	assert.Contains(t, cue, `kind:       "RoleBinding"`)
+		// Conditional namespace-scoped RBAC output group
+		Expect(cue).To(ContainSubstring(`len(_namespacePrivileges) > 0`))
+		Expect(cue).To(ContainSubstring(`kind:       "Role"`))
+		Expect(cue).To(ContainSubstring(`kind:       "RoleBinding"`))
 
-	// String interpolation for cluster-scoped resource names
-	assert.Contains(t, cue, `"\(context.namespace):\(parameter.name)"`)
+		// String interpolation for cluster-scoped resource names
+		Expect(cue).To(ContainSubstring(`"\(context.namespace):\(parameter.name)"`))
 
-	// Rules comprehension with optional fields
-	assert.Contains(t, cue, `for v in _clusterPrivileges`)
-	assert.Contains(t, cue, `verbs: v.verbs`)
-	assert.Contains(t, cue, `if v.apiGroups != _|_`)
+		// Rules comprehension with optional fields
+		Expect(cue).To(ContainSubstring(`for v in _clusterPrivileges`))
+		Expect(cue).To(ContainSubstring(`verbs: v.verbs`))
+		Expect(cue).To(ContainSubstring(`if v.apiGroups != _|_`))
 
-	// Helper type definition
-	assert.Contains(t, cue, `#Privileges`)
-	assert.Contains(t, cue, `privileges?: [...#Privileges]`)
-	assert.Contains(t, cue, `scope: *"namespace" | "cluster"`)
+		// Helper type definition
+		Expect(cue).To(ContainSubstring(`#Privileges`))
+		Expect(cue).To(ContainSubstring(`privileges?: [...#Privileges]`))
+		Expect(cue).To(ContainSubstring(`scope: *"namespace" | "cluster"`))
 
-	// Parameters
-	assert.Contains(t, cue, `name: string`)
-	assert.Contains(t, cue, `create: *false | bool`)
-}
+		// Parameters
+		Expect(cue).To(ContainSubstring(`name: string`))
+		Expect(cue).To(ContainSubstring(`create: *false | bool`))
+	})
+})

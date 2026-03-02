@@ -14,43 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestResourceTrait(t *testing.T) {
-	trait := Resource()
+var _ = Describe("Resource", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Resource()
 
-	assert.Equal(t, "resource", trait.GetName())
+		Expect(trait.GetName()).To(Equal("resource"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"cronjobs.batch"`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"cronjobs.batch"`))
 
-	// Parameters
-	assert.Contains(t, cue, `cpu?:`)
-	assert.Contains(t, cue, `memory?:`)
-	assert.Contains(t, cue, `*"2048Mi"`)
-	assert.Contains(t, cue, `=~"^([1-9][0-9]{0,63})(E|P|T|G|M|K|Ei|Pi|Ti|Gi|Mi|Ki)$"`)
-	assert.Contains(t, cue, `requests?:`)
-	assert.Contains(t, cue, `limits?:`)
+		// Parameters
+		Expect(cue).To(ContainSubstring(`cpu?:`))
+		Expect(cue).To(ContainSubstring(`memory?:`))
+		Expect(cue).To(ContainSubstring(`*"2048Mi"`))
+		Expect(cue).To(ContainSubstring(`=~"^([1-9][0-9]{0,63})(E|P|T|G|M|K|Ei|Pi|Ti|Gi|Mi|Ki)$"`))
+		Expect(cue).To(ContainSubstring(`requests?:`))
+		Expect(cue).To(ContainSubstring(`limits?:`))
 
-	// Template: let binding for DRY container element
-	assert.Contains(t, cue, `let resourceContent =`)
-	assert.Contains(t, cue, `containers: [resourceContent]`)
+		// Template: let binding for DRY container element
+		Expect(cue).To(ContainSubstring(`let resourceContent =`))
+		Expect(cue).To(ContainSubstring(`containers: [resourceContent]`))
 
-	// PatchStrategy annotations on requests/limits
-	assert.Contains(t, cue, `// +patchStrategy=retainKeys`)
+		// PatchStrategy annotations on requests/limits
+		Expect(cue).To(ContainSubstring(`// +patchStrategy=retainKeys`))
 
-	// Two-level context guards
-	assert.Contains(t, cue, `context.output.spec != _|_`)
-	assert.Contains(t, cue, `context.output.spec.template != _|_`)
-	assert.Contains(t, cue, `context.output.spec.jobTemplate != _|_`)
-}
+		// Two-level context guards
+		Expect(cue).To(ContainSubstring(`context.output.spec != _|_`))
+		Expect(cue).To(ContainSubstring(`context.output.spec.template != _|_`))
+		Expect(cue).To(ContainSubstring(`context.output.spec.jobTemplate != _|_`))
+	})
+})

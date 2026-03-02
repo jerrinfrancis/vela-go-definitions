@@ -14,51 +14,54 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestExposeTrait(t *testing.T) {
-	trait := Expose()
+var _ = Describe("Expose Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Expose()
 
-	assert.Equal(t, "expose", trait.GetName())
-	assert.Equal(t, "Expose port to enable web traffic for your component.", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("expose"))
+		Expect(trait.GetDescription()).To(Equal("Expose port to enable web traffic for your component."))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: false`)
-	assert.Contains(t, cue, `stage:`)
-	assert.Contains(t, cue, `"PostDispatch"`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `customStatus:`)
-	assert.Contains(t, cue, `healthPolicy:`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: false`))
+		Expect(cue).To(ContainSubstring(`stage:`))
+		Expect(cue).To(ContainSubstring(`"PostDispatch"`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`customStatus:`))
+		Expect(cue).To(ContainSubstring(`healthPolicy:`))
 
-	// Imports
-	assert.Contains(t, cue, `"strconv"`)
-	assert.Contains(t, cue, `"strings"`)
+		// Imports
+		Expect(cue).To(ContainSubstring(`"strconv"`))
+		Expect(cue).To(ContainSubstring(`"strings"`))
 
-	// Output resource
-	assert.Contains(t, cue, `outputs: service:`)
-	assert.Contains(t, cue, `kind:       "Service"`)
-	assert.Contains(t, cue, `metadata: name:        context.name`)
+		// Output resource
+		Expect(cue).To(ContainSubstring(`outputs: service:`))
+		Expect(cue).To(ContainSubstring(`kind:       "Service"`))
+		Expect(cue).To(ContainSubstring(`metadata: name:        context.name`))
 
-	// Dual-path port handling (legacy vs modern)
-	assert.Contains(t, cue, `if parameter["port"] != _|_`)
-	assert.Contains(t, cue, `if parameter["ports"] != _|_`)
-	assert.Contains(t, cue, `strconv.FormatInt`)
-	assert.Contains(t, cue, `strings.ToLower`)
+		// Dual-path port handling (legacy vs modern)
+		Expect(cue).To(ContainSubstring(`if parameter["port"] != _|_`))
+		Expect(cue).To(ContainSubstring(`if parameter["ports"] != _|_`))
+		Expect(cue).To(ContainSubstring(`strconv.FormatInt`))
+		Expect(cue).To(ContainSubstring(`strings.ToLower`))
 
-	// Parameters
-	assert.Contains(t, cue, `port?: [...int]`)
-	assert.Contains(t, cue, `ports?: [`)
-	assert.Contains(t, cue, `annotations: [string]:`)
-	assert.Contains(t, cue, `matchLabels?: [string]:`)
-	assert.Contains(t, cue, `*"ClusterIP"`)
-}
+		// Parameters
+		Expect(cue).To(ContainSubstring(`port?: [...int]`))
+		Expect(cue).To(ContainSubstring(`ports?: [`))
+		Expect(cue).To(ContainSubstring(`annotations: [string]:`))
+		Expect(cue).To(ContainSubstring(`matchLabels?: [string]:`))
+		Expect(cue).To(ContainSubstring(`*"ClusterIP"`))
+	})
+})

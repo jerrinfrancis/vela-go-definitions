@@ -14,67 +14,70 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestGatewayTrait(t *testing.T) {
-	trait := Gateway()
+var _ = Describe("Gateway Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Gateway()
 
-	assert.Equal(t, "gateway", trait.GetName())
-	assert.Equal(t, "Enable public web traffic for the component, the ingress API matches K8s v1.20+.", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("gateway"))
+		Expect(trait.GetDescription()).To(Equal("Enable public web traffic for the component, the ingress API matches K8s v1.20+."))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: false`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `customStatus:`)
-	assert.Contains(t, cue, `healthPolicy:`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: false`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`customStatus:`))
+		Expect(cue).To(ContainSubstring(`healthPolicy:`))
 
-	// Import
-	assert.Contains(t, cue, `"strconv"`)
+		// Import
+		Expect(cue).To(ContainSubstring(`"strconv"`))
 
-	// Let bindings with conditional values
-	assert.Contains(t, cue, `let nameSuffix =`)
-	assert.Contains(t, cue, `let serviceMetaName =`)
+		// Let bindings with conditional values
+		Expect(cue).To(ContainSubstring(`let nameSuffix =`))
+		Expect(cue).To(ContainSubstring(`let serviceMetaName =`))
 
-	// Conditional Service output (only when no existing service)
-	assert.Contains(t, cue, `if (parameter.existingServiceName == _|_)`)
-	assert.Contains(t, cue, `kind:       "Service"`)
+		// Conditional Service output (only when no existing service)
+		Expect(cue).To(ContainSubstring(`if (parameter.existingServiceName == _|_)`))
+		Expect(cue).To(ContainSubstring(`kind:       "Service"`))
 
-	// Dynamic output names
-	assert.Contains(t, cue, `(serviceOutputName):`)
-	assert.Contains(t, cue, `(ingressOutputName):`)
+		// Dynamic output names
+		Expect(cue).To(ContainSubstring(`(serviceOutputName):`))
+		Expect(cue).To(ContainSubstring(`(ingressOutputName):`))
 
-	// Cluster version conditional apiVersion for Ingress
-	assert.Contains(t, cue, `legacyAPI:`)
-	assert.Contains(t, cue, `context.clusterVersion.minor < 19`)
-	assert.Contains(t, cue, `"networking.k8s.io/v1beta1"`)
-	assert.Contains(t, cue, `"networking.k8s.io/v1"`)
-	assert.Contains(t, cue, `kind: "Ingress"`)
+		// Cluster version conditional apiVersion for Ingress
+		Expect(cue).To(ContainSubstring(`legacyAPI:`))
+		Expect(cue).To(ContainSubstring(`context.clusterVersion.minor < 19`))
+		Expect(cue).To(ContainSubstring(`"networking.k8s.io/v1beta1"`))
+		Expect(cue).To(ContainSubstring(`"networking.k8s.io/v1"`))
+		Expect(cue).To(ContainSubstring(`kind: "Ingress"`))
 
-	// Map iteration for ports and paths
-	assert.Contains(t, cue, `for k, v in parameter.http`)
-	assert.Contains(t, cue, `strconv.FormatInt`)
+		// Map iteration for ports and paths
+		Expect(cue).To(ContainSubstring(`for k, v in parameter.http`))
+		Expect(cue).To(ContainSubstring(`strconv.FormatInt`))
 
-	// Conditional annotations and labels spreading
-	assert.Contains(t, cue, `if parameter.annotations != _|_`)
-	assert.Contains(t, cue, `for key, value in parameter.annotations`)
-	assert.Contains(t, cue, `if parameter.labels != _|_`)
+		// Conditional annotations and labels spreading
+		Expect(cue).To(ContainSubstring(`if parameter.annotations != _|_`))
+		Expect(cue).To(ContainSubstring(`for key, value in parameter.annotations`))
+		Expect(cue).To(ContainSubstring(`if parameter.labels != _|_`))
 
-	// Parameters
-	assert.Contains(t, cue, `domain?: string`)
-	assert.Contains(t, cue, `http: [string]: int`)
-	assert.Contains(t, cue, `class: *"nginx" | string`)
-	assert.Contains(t, cue, `classInSpec: *false | bool`)
-	assert.Contains(t, cue, `secretName?: string`)
-	assert.Contains(t, cue, `pathType: *"ImplementationSpecific"`)
-	assert.Contains(t, cue, `existingServiceName?: string`)
-}
+		// Parameters
+		Expect(cue).To(ContainSubstring(`domain?: string`))
+		Expect(cue).To(ContainSubstring(`http: [string]: int`))
+		Expect(cue).To(ContainSubstring(`class: *"nginx" | string`))
+		Expect(cue).To(ContainSubstring(`classInSpec: *false | bool`))
+		Expect(cue).To(ContainSubstring(`secretName?: string`))
+		Expect(cue).To(ContainSubstring(`pathType: *"ImplementationSpecific"`))
+		Expect(cue).To(ContainSubstring(`existingServiceName?: string`))
+	})
+})

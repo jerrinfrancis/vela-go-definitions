@@ -14,63 +14,66 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestAffinityTrait(t *testing.T) {
-	trait := Affinity()
+var _ = Describe("Affinity Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Affinity()
 
-	assert.Equal(t, "affinity", trait.GetName())
+		Expect(trait.GetName()).To(Equal("affinity"))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Header and attributes
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: true`)
-	assert.Contains(t, cue, `"ui-hidden": "true"`)
+		// Header and attributes
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: true`))
+		Expect(cue).To(ContainSubstring(`"ui-hidden": "true"`))
 
-	// Parameters
-	assert.Contains(t, cue, `podAffinity?:`)
-	assert.Contains(t, cue, `podAntiAffinity?:`)
-	assert.Contains(t, cue, `nodeAffinity?:`)
-	assert.Contains(t, cue, `tolerations?:`)
+		// Parameters
+		Expect(cue).To(ContainSubstring(`podAffinity?:`))
+		Expect(cue).To(ContainSubstring(`podAntiAffinity?:`))
+		Expect(cue).To(ContainSubstring(`nodeAffinity?:`))
+		Expect(cue).To(ContainSubstring(`tolerations?:`))
 
-	assert.Contains(t, cue, `weight: int & >=1 & <=100`)
+		Expect(cue).To(ContainSubstring(`weight: int & >=1 & <=100`))
 
-	assert.Contains(t, cue, `podAffinityTerm: #podAffinityTerm`)
-	assert.Contains(t, cue, `nodeSelectorTerms: [...#nodeSelectorTerm]`)
-	assert.Contains(t, cue, `preference: #nodeSelectorTerm`)
+		Expect(cue).To(ContainSubstring(`podAffinityTerm: #podAffinityTerm`))
+		Expect(cue).To(ContainSubstring(`nodeSelectorTerms: [...#nodeSelectorTerm]`))
+		Expect(cue).To(ContainSubstring(`preference: #nodeSelectorTerm`))
 
-	// Sub-field conditions
-	assert.Contains(t, cue, `parameter.podAffinity.required != _|_`)
-	assert.Contains(t, cue, `parameter.podAffinity.preferred != _|_`)
-	assert.Contains(t, cue, `parameter.podAntiAffinity.required != _|_`)
-	assert.Contains(t, cue, `parameter.nodeAffinity.required != _|_`)
-	assert.Contains(t, cue, `parameter.nodeAffinity.preferred != _|_`)
+		// Sub-field conditions
+		Expect(cue).To(ContainSubstring(`parameter.podAffinity.required != _|_`))
+		Expect(cue).To(ContainSubstring(`parameter.podAffinity.preferred != _|_`))
+		Expect(cue).To(ContainSubstring(`parameter.podAntiAffinity.required != _|_`))
+		Expect(cue).To(ContainSubstring(`parameter.nodeAffinity.required != _|_`))
+		Expect(cue).To(ContainSubstring(`parameter.nodeAffinity.preferred != _|_`))
 
-	// Optional field guards in foreach
-	assert.Contains(t, cue, `if v.labelSelector != _|_`)
-	assert.Contains(t, cue, `if v.namespaces != _|_`)
-	assert.Contains(t, cue, `if v.key != _|_`)
-	assert.Contains(t, cue, `if v.effect != _|_`)
-	assert.Contains(t, cue, `if v.tolerationSeconds != _|_`)
-	assert.Contains(t, cue, `operator: v.operator`) // required field - no guard
+		// Optional field guards in foreach
+		Expect(cue).To(ContainSubstring(`if v.labelSelector != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.namespaces != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.key != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.effect != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.tolerationSeconds != _|_`))
+		Expect(cue).To(ContainSubstring(`operator: v.operator`)) // required field - no guard
 
-	// Optional field guards for nested struct fields
-	assert.Contains(t, cue, `if v.namespaceSelector != _|_`)
-	assert.Contains(t, cue, `if v.matchExpressions != _|_`)
-	assert.Contains(t, cue, `if v.matchFields != _|_`)
+		// Optional field guards for nested struct fields
+		Expect(cue).To(ContainSubstring(`if v.namespaceSelector != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.matchExpressions != _|_`))
+		Expect(cue).To(ContainSubstring(`if v.matchFields != _|_`))
 
-	assert.Contains(t, cue, `#labelSelector`)
-	assert.Contains(t, cue, `matchLabels?: [string]: string`)
-	assert.Contains(t, cue, `values?: [...string]`)
-	assert.Contains(t, cue, `namespaces?: [...string]`)
-	assert.Contains(t, cue, `#podAffinityTerm`)
-	assert.Contains(t, cue, `#nodeSelectorTerm`)
-	assert.Contains(t, cue, `matchExpressions?: [...#nodeSelector]`)
-}
+		Expect(cue).To(ContainSubstring(`#labelSelector`))
+		Expect(cue).To(ContainSubstring(`matchLabels?: [string]: string`))
+		Expect(cue).To(ContainSubstring(`values?: [...string]`))
+		Expect(cue).To(ContainSubstring(`namespaces?: [...string]`))
+		Expect(cue).To(ContainSubstring(`#podAffinityTerm`))
+		Expect(cue).To(ContainSubstring(`#nodeSelectorTerm`))
+		Expect(cue).To(ContainSubstring(`matchExpressions?: [...#nodeSelector]`))
+	})
+})

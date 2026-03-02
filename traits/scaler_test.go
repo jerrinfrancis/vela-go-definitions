@@ -14,27 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package traits
+package traits_test
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/oam-dev/vela-go-definitions/traits"
 )
 
-func TestScalerTrait(t *testing.T) {
-	trait := Scaler()
+var _ = Describe("Scaler Trait", func() {
+	It("should have correct name and CUE output", func() {
+		trait := traits.Scaler()
 
-	assert.Equal(t, "scaler", trait.GetName())
-	assert.Equal(t, "Manually scale K8s pod for your workload which follows the pod spec in path 'spec.template'.", trait.GetDescription())
+		Expect(trait.GetName()).To(Equal("scaler"))
+		Expect(trait.GetDescription()).To(Equal("Manually scale K8s pod for your workload which follows the pod spec in path 'spec.template'."))
 
-	cue := trait.ToCue()
+		cue := trait.ToCue()
 
-	// Verify key elements are present
-	assert.Contains(t, cue, `type: "trait"`)
-	assert.Contains(t, cue, `podDisruptive: false`)
-	assert.Contains(t, cue, `"deployments.apps"`)
-	assert.Contains(t, cue, `"statefulsets.apps"`)
-	assert.Contains(t, cue, `replicas:`)
-	assert.Contains(t, cue, `*1`)
-}
+		// Verify key elements are present
+		Expect(cue).To(ContainSubstring(`type: "trait"`))
+		Expect(cue).To(ContainSubstring(`podDisruptive: false`))
+		Expect(cue).To(ContainSubstring(`"deployments.apps"`))
+		Expect(cue).To(ContainSubstring(`"statefulsets.apps"`))
+		Expect(cue).To(ContainSubstring(`replicas:`))
+		Expect(cue).To(ContainSubstring(`*1`))
+	})
+})
