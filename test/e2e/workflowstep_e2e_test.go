@@ -41,7 +41,6 @@ var skipWorkflowStepTests = map[string]string{
 	"generate-jdbc-connection.yaml": "requires alibaba-rds component",
 	"apply-terraform-config.yaml":   "requires Alibaba Cloud credentials and terraform provider",
 	"apply-terraform-provider.yaml": "requires Alibaba Cloud credentials",
-	"check-metrics.yaml":            "requires Prometheus server in cluster",
 }
 
 var _ = Describe("WorkflowStep Definition E2E Tests", Label("workflowsteps"), func() {

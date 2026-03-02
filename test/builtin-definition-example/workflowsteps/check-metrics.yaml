@@ -22,11 +22,10 @@ spec:
         component: nginx-server
 
     # Step 2: Check metrics example
-    # NOTE: This step requires Prometheus to be installed in your cluster.
-    # Without Prometheus, this step will fail. To test without Prometheus,
-    # you can skip this step or install Prometheus first.
+    # Using PromLabs public demo server (https://demo.promlabs.com)
+    # This is a free, public Prometheus instance for testing and demo purposes.
     #
-    # To install Prometheus:
+    # For production/local testing, install Prometheus in your cluster:
     #   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     #   helm install prometheus prometheus-community/prometheus -n o11y-system --create-namespace
     #
@@ -34,14 +33,13 @@ spec:
       type: check-metrics
       timeout: 2m
       properties:
-        # Simple query: check if prometheus server itself is up
-        # 'up{job="prometheus"}' checks if Prometheus can scrape itself
-        query: "up{job=\"prometheus\"}"
-        # Prometheus endpoint (internal cluster DNS - NOT localhost)
-        # localhost:9090 is your port-forward for browser access
-        # Inside the cluster, use the service DNS name
-        metricEndpoint: "http://prometheus-server.o11y-system.svc.cluster.local:80"
-        # Condition: value must be >= 1
+        # Query: check if prometheus itself is up (single result)
+        # Using job="prometheus" to get exactly one result
+        query: 'up{job="prometheus"}'
+        # PromLabs public demo endpoint
+        # See: https://demo.promlabs.com
+        metricEndpoint: "https://demo.promlabs.com"
+        # Condition: value must be >= 1 (target is up)
         condition: ">=1"
         # Duration to maintain the condition
         duration: "30s"
