@@ -109,7 +109,7 @@ var _ = Describe("All WorkflowSteps Registered", func() {
 		} {
 			return workflowsteps.Suspend()
 		}},
-		{"apply-component", "Apply a specific component and its corresponding traits in application.", func() interface {
+		{"apply-component", "Apply a specific component and its corresponding traits in application", func() interface {
 			GetName() string
 			GetDescription() string
 			ToCue() string

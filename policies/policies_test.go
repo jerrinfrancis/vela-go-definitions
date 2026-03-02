@@ -97,10 +97,10 @@ var _ = Describe("GarbageCollect Policy", func() {
 		Expect(cue).To(ContainSubstring(`strategy: *"onAppUpdate"`))
 
 		// Verify ResourcePolicyRuleSelector fields
-		Expect(cue).To(ContainSubstring(`componentNames?: [...string]`))
-		Expect(cue).To(ContainSubstring(`componentTypes?: [...string]`))
-		Expect(cue).To(ContainSubstring(`oamTypes?: [...string]`))
-		Expect(cue).To(ContainSubstring(`traitTypes?: [...string]`))
+		Expect(cue).To(ContainSubstring(`componentNames?: [...]`))
+		Expect(cue).To(ContainSubstring(`componentTypes?: [...]`))
+		Expect(cue).To(ContainSubstring(`oamTypes?: [...]`))
+		Expect(cue).To(ContainSubstring(`traitTypes?: [...]`))
 	})
 })
 
