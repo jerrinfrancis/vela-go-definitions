@@ -14,7 +14,7 @@ require (
 )
 
 // Add kubevela replace directive for local development here
-replace github.com/oam-dev/kubevela => github.com/guidewire-oss/kubevela v0.0.0-20260225085926-e6d35724853d
+replace github.com/oam-dev/kubevela => github.com/guidewire-oss/kubevela v0.0.0-20260302094331-a5836aeea82c
 
 require (
 	cuelang.org/go v0.14.1 // indirect
