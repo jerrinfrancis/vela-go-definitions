@@ -26,7 +26,6 @@ spec:
           kind: PersistentVolumeClaim
           metadata:
             name: myclaim
-            namespace: default
           spec:
             accessModes:
             - ReadWriteOnce
