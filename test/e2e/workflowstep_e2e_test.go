@@ -90,6 +90,11 @@ var _ = Describe("WorkflowStep Definition E2E Tests", Label("workflowsteps"), fu
 						if !testPassed {
 							GinkgoWriter.Printf("\n⚠️ Test did not complete successfully, gathering diagnostics...\n")
 							GinkgoWriter.Printf("%s\n", getAppFailureDiagnostics(ctx, app.Name, uniqueNs))
+							// Print kaniko pod logs for build-push-image workflow step
+							if filepath.Base(file) == "build-push-image.yaml" {
+								GinkgoWriter.Printf("\n--- Kaniko Pod Diagnostics ---\n")
+								GinkgoWriter.Printf("%s\n", getKanikoPodLogs(uniqueNs))
+							}
 						}
 						// Clean up namespace after test
 						GinkgoWriter.Printf("Deleting namespace %s...\n", uniqueNs)
