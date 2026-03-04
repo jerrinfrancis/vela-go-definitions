@@ -26,21 +26,27 @@ func GarbageCollect() *defkit.PolicyDefinition {
 	// Define helper type for resource selector
 	resourcePolicyRuleSelector := defkit.Struct("selector").Fields(
 		defkit.Field("componentNames", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by component names").
 			Optional(),
 		defkit.Field("componentTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by component types").
 			Optional(),
 		defkit.Field("oamTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by oamTypes (COMPONENT or TRAIT)").
 			Optional(),
 		defkit.Field("traitTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by trait types").
 			Optional(),
 		defkit.Field("resourceTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by resource types (like Deployment)").
 			Optional(),
 		defkit.Field("resourceNames", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by their names").
 			Optional(),
 	)
@@ -49,12 +55,15 @@ func GarbageCollect() *defkit.PolicyDefinition {
 	garbageCollectPolicyRule := defkit.Struct("rule").Fields(
 		defkit.Field("selector", defkit.ParamTypeStruct).
 			Description("Specify how to select the targets of the rule").
-			WithSchemaRef("ResourcePolicyRuleSelector"),
+			WithSchemaRef("ResourcePolicyRuleSelector").
+			Required(),
 		defkit.Field("strategy", defkit.ParamTypeString).
 			Description("Specify the strategy for target resource to recycle").
-			Default("onAppUpdate"),
+			Default("onAppUpdate").
+			Enum("onAppUpdate", "onAppDelete", "never"),
 		defkit.Field("propagation", defkit.ParamTypeString).
 			Description("Specify the deletion propagation strategy for target resource to delete").
+			Enum("orphan", "cascading").
 			Optional(),
 	)
 

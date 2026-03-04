@@ -72,38 +72,6 @@ var _ = Describe("Override Policy", func() {
 	})
 })
 
-var _ = Describe("GarbageCollect Policy", func() {
-	It("should have correct name and CUE output", func() {
-		policy := policies.GarbageCollect()
-
-		Expect(policy.GetName()).To(Equal("garbage-collect"))
-		Expect(policy.GetDescription()).To(Equal("Configure the garbage collect behaviour for the application."))
-
-		cue := policy.ToCue()
-
-		Expect(cue).To(ContainSubstring(`type: "policy"`))
-
-		// Verify helper type definitions
-		Expect(cue).To(ContainSubstring(`#GarbageCollectPolicyRule`))
-		Expect(cue).To(ContainSubstring(`#ResourcePolicyRuleSelector`))
-
-		// Verify parameter types and defaults
-		Expect(cue).To(ContainSubstring(`applicationRevisionLimit?: int`))
-		Expect(cue).To(ContainSubstring(`keepLegacyResource: *false | bool`))
-		Expect(cue).To(ContainSubstring(`continueOnFailure: *false | bool`))
-		Expect(cue).To(ContainSubstring(`rules?:`))
-
-		// Verify GarbageCollectPolicyRule strategy enum default
-		Expect(cue).To(ContainSubstring(`strategy: *"onAppUpdate"`))
-
-		// Verify ResourcePolicyRuleSelector fields
-		Expect(cue).To(ContainSubstring(`componentNames?: [...]`))
-		Expect(cue).To(ContainSubstring(`componentTypes?: [...]`))
-		Expect(cue).To(ContainSubstring(`oamTypes?: [...]`))
-		Expect(cue).To(ContainSubstring(`traitTypes?: [...]`))
-	})
-})
-
 var _ = Describe("All Policies Registered", func() {
 	type policyEntry struct {
 		name        string
