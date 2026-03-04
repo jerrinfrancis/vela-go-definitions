@@ -23,35 +23,17 @@ import (
 // ResourceUpdate creates the resource-update policy definition.
 // This policy configures the update strategy for selected resources.
 func ResourceUpdate() *defkit.PolicyDefinition {
-	// Define helper type for rule selector
-	ruleSelector := defkit.Struct("selector").Fields(
-		defkit.Field("componentNames", defkit.ParamTypeArray).
-			Description("Select resources by component names").
-			Optional(),
-		defkit.Field("componentTypes", defkit.ParamTypeArray).
-			Description("Select resources by component types").
-			Optional(),
-		defkit.Field("oamTypes", defkit.ParamTypeArray).
-			Description("Select resources by oamTypes (COMPONENT or TRAIT)").
-			Optional(),
-		defkit.Field("traitTypes", defkit.ParamTypeArray).
-			Description("Select resources by trait types").
-			Optional(),
-		defkit.Field("resourceTypes", defkit.ParamTypeArray).
-			Description("Select resources by resource types (like Deployment)").
-			Optional(),
-		defkit.Field("resourceNames", defkit.ParamTypeArray).
-			Description("Select resources by their names").
-			Optional(),
-	)
+	ruleSelector := defkit.Struct("selector").Fields(RuleSelectorFields()...)
 
 	// Define helper type for strategy
 	strategy := defkit.Struct("strategy").Fields(
 		defkit.Field("op", defkit.ParamTypeString).
 			Description("Specify the op for updating target resources").
-			Default("patch"),
+			Default("patch").
+			Enum("patch", "replace"),
 		defkit.Field("recreateFields", defkit.ParamTypeArray).
 			Description("Specify which fields would trigger recreation when updated").
+			ArrayOf(defkit.ParamTypeString).
 			Optional(),
 	)
 
@@ -59,10 +41,12 @@ func ResourceUpdate() *defkit.PolicyDefinition {
 	policyRule := defkit.Struct("rule").Fields(
 		defkit.Field("selector", defkit.ParamTypeStruct).
 			Description("Specify how to select the targets of the rule").
-			WithSchemaRef("RuleSelector"),
+			WithSchemaRef("RuleSelector").
+			Required(),
 		defkit.Field("strategy", defkit.ParamTypeStruct).
 			Description("The update strategy for the target resources").
-			WithSchemaRef("Strategy"),
+			WithSchemaRef("Strategy").
+			Required(),
 	)
 
 	return defkit.NewPolicy("resource-update").

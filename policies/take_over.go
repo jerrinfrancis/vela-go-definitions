@@ -23,33 +23,14 @@ import (
 // TakeOver creates the take-over policy definition.
 // This policy configures resources to be able to take over when it belongs to no application.
 func TakeOver() *defkit.PolicyDefinition {
-	// Define helper type for rule selector
-	ruleSelector := defkit.Struct("selector").Fields(
-		defkit.Field("componentNames", defkit.ParamTypeArray).
-			Description("Select resources by component names").
-			Optional(),
-		defkit.Field("componentTypes", defkit.ParamTypeArray).
-			Description("Select resources by component types").
-			Optional(),
-		defkit.Field("oamTypes", defkit.ParamTypeArray).
-			Description("Select resources by oamTypes (COMPONENT or TRAIT)").
-			Optional(),
-		defkit.Field("traitTypes", defkit.ParamTypeArray).
-			Description("Select resources by trait types").
-			Optional(),
-		defkit.Field("resourceTypes", defkit.ParamTypeArray).
-			Description("Select resources by resource types (like Deployment)").
-			Optional(),
-		defkit.Field("resourceNames", defkit.ParamTypeArray).
-			Description("Select resources by their names").
-			Optional(),
-	)
+	ruleSelector := defkit.Struct("selector").Fields(RuleSelectorFields()...)
 
 	// Define helper type for policy rule
 	policyRule := defkit.Struct("rule").Fields(
 		defkit.Field("selector", defkit.ParamTypeStruct).
 			Description("Specify how to select the targets of the rule").
-			WithSchemaRef("RuleSelector"),
+			WithSchemaRef("RuleSelector").
+			Required(),
 	)
 
 	return defkit.NewPolicy("take-over").
