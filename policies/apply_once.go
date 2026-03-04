@@ -26,21 +26,27 @@ func ApplyOnce() *defkit.PolicyDefinition {
 	// Define helper type for resource selector (shared across policies)
 	resourcePolicyRuleSelector := defkit.Struct("selector").Fields(
 		defkit.Field("componentNames", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by component names").
 			Optional(),
 		defkit.Field("componentTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by component types").
 			Optional(),
 		defkit.Field("oamTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by oamTypes (COMPONENT or TRAIT)").
 			Optional(),
 		defkit.Field("traitTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by trait types").
 			Optional(),
 		defkit.Field("resourceTypes", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by resource types (like Deployment)").
 			Optional(),
 		defkit.Field("resourceNames", defkit.ParamTypeArray).
+			ArrayOf(defkit.ParamTypeString).
 			Description("Select resources by their names").
 			Optional(),
 	)
@@ -51,7 +57,9 @@ func ApplyOnce() *defkit.PolicyDefinition {
 			Description("When the strategy takes effect, e.g. onUpdate, onStateKeep").
 			Optional(),
 		defkit.Field("path", defkit.ParamTypeArray).
-			Description("Specify the path of the resource that allow configuration drift"),
+			ArrayOf(defkit.ParamTypeString).
+			Description("Specify the path of the resource that allow configuration drift").
+			Required(),
 	)
 
 	// Define helper type for apply-once policy rule
@@ -62,7 +70,8 @@ func ApplyOnce() *defkit.PolicyDefinition {
 			WithSchemaRef("ResourcePolicyRuleSelector"),
 		defkit.Field("strategy", defkit.ParamTypeStruct).
 			Description("Specify the strategy for configuring the resource level configuration drift behaviour").
-			WithSchemaRef("ApplyOnceStrategy"),
+			WithSchemaRef("ApplyOnceStrategy").
+			Required(),
 	)
 
 	return defkit.NewPolicy("apply-once").
