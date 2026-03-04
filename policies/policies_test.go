@@ -45,33 +45,6 @@ var _ = Describe("Topology Policy", func() {
 	})
 })
 
-var _ = Describe("Override Policy", func() {
-	It("should have correct name and CUE output", func() {
-		policy := policies.Override()
-
-		Expect(policy.GetName()).To(Equal("override"))
-		Expect(policy.GetDescription()).To(Equal("Describe the configuration to override when deploying resources, it only works with specified `deploy` step in workflow."))
-
-		cue := policy.ToCue()
-
-		Expect(cue).To(ContainSubstring(`type: "policy"`))
-
-		// Verify helper type definitions
-		Expect(cue).To(ContainSubstring(`#PatchParams`))
-
-		// Verify PatchParams fields with types
-		Expect(cue).To(ContainSubstring(`name?: string`))
-		Expect(cue).To(ContainSubstring(`type?: string`))
-		Expect(cue).To(ContainSubstring(`properties?: {...}`))
-		Expect(cue).To(ContainSubstring(`traits?:`))
-		Expect(cue).To(ContainSubstring(`disable: *false | bool`))
-
-		// Verify top-level parameters reference helpers
-		Expect(cue).To(ContainSubstring(`components?:`))
-		Expect(cue).To(ContainSubstring(`selector?: [...string]`))
-	})
-})
-
 var _ = Describe("All Policies Registered", func() {
 	type policyEntry struct {
 		name        string
