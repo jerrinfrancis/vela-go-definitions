@@ -2750,10 +2750,362 @@ mountsArray := tpl.Helper("mountsArray").
         <div><div class="section-title">Value Expressions</div></div>
       </div>
       <p class="section-desc">Deferred-evaluation value constructors and condition builders. Values are compiled into CUE expressions — not evaluated immediately in Go.</p>
-      <div class="placeholder-box">
-        <div class="pl-icon"><span class="material-icons-round">hourglass_empty</span></div>
-        <p>Full API reference for <strong>Lit</strong>, <strong>Reference</strong>, <strong>Interpolation</strong>, comparison operators, logical operators, string operations, <strong>Let</strong> bindings — coming in Phase 3.</p>
-        <div class="pl-phase">Phase 3</div>
+      <!-- ── VALUE CONSTRUCTORS ─────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem;color:var(--text);">Value Constructors</h3>
+
+      <!-- Lit / Reference / Interpolation -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.Lit(v) / defkit.Reference(path) / defkit.Interpolation(parts...)</code>
+          <div class="method-meta">
+            <div class="method-title">Lit / Reference / Interpolation</div>
+            <div class="method-desc">The three fundamental value constructors. <code>defkit.Lit(v)</code> produces a CUE literal value (string, int, or bool). <code>defkit.Reference(path)</code> emits a raw CUE path — use for context fields, output fields, or computed CUE expressions that the fluent API doesn't cover. <code>defkit.Interpolation(parts...)</code> builds a CUE string interpolation expression from mixed literals and parameter references.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>vela := defkit.VelaCtx()
+name := defkit.String("name").Required()
+
+// Lit: produces a literal value
+defkit.Lit("Resource")        // string literal
+defkit.Lit(80)                // int literal
+defkit.Lit(true)              // bool literal
+
+// Reference: raw CUE path
+defkit.Reference("m.name")                     // iteration variable
+defkit.Reference("context.output.spec")        // context path
+defkit.Reference("json.Unmarshal(req.body)")   // CUE expression
+
+// Interpolation: string interpolation
+clusterScopedName := defkit.Interpolation(
+    vela.Namespace(),  // context.namespace
+    defkit.Lit(":"),   // literal ":"
+    name,              // parameter.name
+)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// Lit values
+type: "Resource"
+port: 80
+enabled: true
+
+// Reference
+name: m.name
+spec: context.output.spec
+result: json.Unmarshal(req.body)
+
+// Interpolation
+"\(context.namespace):\(parameter.name)"</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ParameterField / ParamPath / PathExists -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.ParameterField(path) / defkit.ParamPath(path) / defkit.PathExists(path)</code>
+          <div class="method-meta">
+            <div class="method-title">ParameterField / ParamPath / PathExists</div>
+            <div class="method-desc"><code>defkit.ParameterField(path)</code> and <code>defkit.ParamPath(path)</code> both produce a <code>parameter.path</code> reference — use when referencing nested parameter fields not captured by a <code>*Param</code> variable. <code>defkit.PathExists(path)</code> creates a boolean condition that is true when the given CUE path is not <code>_|_</code> (undefined).</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>// ParameterField: reference a nested parameter field
+strategyType := defkit.ParameterField("strategy.type")
+maxSurge     := defkit.ParameterField("strategy.rollingStrategy.maxSurge")
+
+// ParamPath: equivalent to ParameterField for path references
+affinityRequired := defkit.ParamPath("podAffinity.required")
+
+// PathExists: condition when path is defined
+hasData := defkit.PathExists("parameter.data")
+tpl.SetIf(hasData, "data", defkit.Reference("parameter.data"))</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// ParameterField / ParamPath
+parameter.strategy.type
+parameter.strategy.rollingStrategy.maxSurge
+parameter.podAffinity.required
+
+// PathExists condition
+if parameter.data != _|_ {
+    data: parameter.data
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── COMPARISON OPERATORS ───────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Comparison Operators</h3>
+
+      <!-- Eq / Ne / Lt / Le / Gt / Ge -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.Eq(a, b) / defkit.Ne / defkit.Lt / defkit.Le / defkit.Gt / defkit.Ge</code>
+          <div class="method-meta">
+            <div class="method-title">Eq / Ne / Lt / Le / Gt / Ge</div>
+            <div class="method-desc">Comparison operators that produce boolean value expressions. Used as conditions in <code>.SetIf()</code>, <code>.If()</code>, <code>tpl.OutputsIf()</code>, and <code>.VersionIf()</code>. Operands are any <code>Value</code> — combine <code>defkit.Lit()</code>, <code>defkit.ParameterField()</code>, <code>defkit.Reference()</code>, or parameter variables.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>vela := defkit.VelaCtx()
+
+// Compare parameter field to literal
+isDeployment  := defkit.Eq(defkit.ParameterField("targetKind"), defkit.Lit("Deployment"))
+isNotOnDelete := defkit.Ne(defkit.ParameterField("strategy.type"), defkit.Lit("OnDelete"))
+
+// Compare cluster version to integer literal
+isOldCluster := defkit.Lt(vela.ClusterVersion().Minor(), defkit.Lit(23))
+isNewCluster := defkit.Ge(vela.ClusterVersion().Minor(), defkit.Lit(23))
+
+// Use as condition in If / VersionIf
+.If(isDeployment).
+    Set("spec.strategy.type", strategyType).
+EndIf()
+
+.VersionIf(isOldCluster, "autoscaling/v2beta2").
+ VersionIf(isNewCluster, "autoscaling/v2")</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// Eq → ==
+if parameter.targetKind == "Deployment" { ... }
+
+// Ne → !=
+if parameter.strategy.type != "OnDelete" { ... }
+
+// Lt / Ge → &lt; / &gt;=
+if context.clusterVersion.minor &lt; 23 { "autoscaling/v2beta2" }
+if context.clusterVersion.minor &gt;= 23 { "autoscaling/v2" }</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- .IsSet() / .IsTrue() / .Field() -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">param.IsSet() / param.IsTrue() / param.Field(name) / param.Eq(value)</code>
+          <div class="method-meta">
+            <div class="method-title">IsSet / IsTrue / Field / Eq (param chain)</div>
+            <div class="method-desc">Chain methods on <code>*Param</code> that produce condition values. <code>.IsSet()</code> is true when the parameter has been supplied (not <code>_|_</code>). <code>.IsTrue()</code> is true when a <code>Bool</code> parameter equals <code>true</code>. <code>.Field(name)</code> returns a value expression for a named field of a Struct/Object parameter. <code>.Eq(v)</code> produces an equality condition on the parameter value.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>cmd    := defkit.StringList("cmd")
+create := defkit.Bool("create").Default(false)
+cpu    := defkit.Struct("cpu").Required().WithFields(
+    defkit.String("type").Default("Utilization"),
+    defkit.Int("value").Default(50),
+)
+
+// .IsSet(): parameter was provided
+.SetIf(cmd.IsSet(), "spec.template.spec.containers[0].command", cmd)
+
+// .IsTrue(): bool parameter is true
+tpl.OutputsIf(create.IsTrue(), "service-account", serviceAccount)
+
+// .Field(): access nested struct field
+cpuType  := cpu.Field("type")
+cpuValue := cpu.Field("value")
+.SetIf(cpuType.Eq("Utilization"), "averageUtilization", cpuValue)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// .IsSet()
+if parameter.cmd != _|_ {
+    spec: template: spec: containers: [{
+        command: parameter.cmd
+    }]
+}
+
+// .IsTrue()
+if parameter.create { outputs: "service-account": { ... } }
+
+// .Field() + .Eq()
+if parameter.cpu.type == "Utilization" {
+    averageUtilization: parameter.cpu.value
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LOGICAL OPERATORS ───────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Logical Operators</h3>
+
+      <!-- And / Or / LenGt -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.And(exprs...) / defkit.Or(exprs...) / defkit.LenGt(expr, n)</code>
+          <div class="method-meta">
+            <div class="method-title">And / Or / LenGt</div>
+            <div class="method-desc">Logical combination operators. <code>defkit.And()</code> and <code>defkit.Or()</code> combine multiple boolean expressions. <code>defkit.LenGt(expr, n)</code> produces a condition that is true when the length of an array expression is greater than n — commonly used after <code>defkit.From().Filter()</code> to check whether the filtered list is non-empty.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>privileges      := defkit.Array("privileges").Optional()
+clusterPrivsRef := defkit.LetVariable("_clusterPrivileges")
+
+isDeployment  := defkit.Eq(defkit.ParameterField("targetKind"), defkit.Lit("Deployment"))
+isNotOnDelete := defkit.Ne(defkit.ParameterField("strategy.type"), defkit.Lit("OnDelete"))
+
+// And: both conditions must be true
+.If(defkit.And(isDeployment, isNotOnDelete)).
+    Set("spec.strategy.type", strategyType).
+EndIf()
+
+// LenGt: filtered list is non-empty
+tpl.OutputsGroupIf(
+    defkit.And(privileges.IsSet(), defkit.LenGt(clusterPrivsRef, 0)),
+    func(g *defkit.OutputGroup) {
+        g.Add("cluster-role", clusterRole)
+        g.Add("cluster-role-binding", clusterRoleBinding)
+    },
+)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// And
+if parameter.targetKind == "Deployment" &amp;&amp;
+   parameter.strategy.type != "OnDelete" {
+    spec: strategy: type: parameter.strategy.type
+}
+
+// LenGt with OutputsGroupIf
+if parameter.privileges != _|_ &amp;&amp;
+   len(_clusterPrivileges) &gt; 0 {
+    outputs: "cluster-role":         { ... }
+    outputs: "cluster-role-binding": { ... }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STRING OPERATIONS ───────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">String Operations</h3>
+
+      <!-- StrconvFormatInt -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.StrconvFormatInt(v Value, base int)</code>
+          <div class="method-meta">
+            <div class="method-title">StrconvFormatInt</div>
+            <div class="method-desc">Converts an integer value to a string using CUE's <code>strconv.FormatInt(v, base)</code> call. Used when a string URL or path must include a numeric parameter. Requires the definition to import <code>"strconv"</code> via <code>.WithImports("strconv")</code>. Combine with <code>defkit.Interpolation()</code> to build full URL strings.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>protocal := defkit.String("protocal").Default("http")
+
+// StrconvFormatInt: int → string (base 10)
+portStr := defkit.StrconvFormatInt(defkit.Reference("endpoint.port"), 10)
+
+// Build URL with Interpolation
+url := defkit.Interpolation(
+    protocal,                          // parameter.protocal
+    defkit.Lit("://"),                 // "://"
+    defkit.Reference("endpoint.host"), // endpoint.host
+    defkit.Lit(":"),                   // ":"
+    defkit.Reference("_portStr"),      // let variable
+)
+
+.SetIf(hasEndpoints, "_portStr", portStr)
+.SetIf(hasEndpoints, "url", url)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// StrconvFormatInt
+_portStr: strconv.FormatInt(endpoint.port, 10)
+
+// Interpolation → CUE \() syntax
+url: "\(parameter.protocal)://\(endpoint.host):\(_portStr)"</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LET BINDINGS ────────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Let Bindings</h3>
+
+      <!-- LetVariable -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.LetVariable(name string) Value</code>
+          <div class="method-meta">
+            <div class="method-title">LetVariable</div>
+            <div class="method-desc">Returns a <code>Value</code> that references a CUE <code>let</code> variable by name. Use after establishing the binding with <code>tpl.AddLetBinding(name, expr)</code>. The variable can then be passed to <code>.Set()</code>, <code>defkit.LenGt()</code>, <code>defkit.ForEachIn()</code>, or any other value-accepting API.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>privileges := defkit.Array("privileges").Optional()
+
+// 1. Establish the let binding in the template
+tpl.AddLetBinding("_clusterPrivileges",
+    defkit.From(privileges).
+        Filter(defkit.FieldEquals("scope", "cluster")).
+        Guard(privileges.IsSet()))
+
+// 2. Reference the binding by name
+clusterPrivsRef := defkit.LetVariable("_clusterPrivileges")
+
+// 3. Use the reference in conditions and comprehensions
+rules := defkit.ForEachIn(clusterPrivsRef).MapFields(rulesFields)
+tpl.OutputsGroupIf(
+    defkit.LenGt(clusterPrivsRef, 0),
+    func(g *defkit.OutputGroup) { g.Add("role", role) },
+)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// AddLetBinding → injected at template header
+let _clusterPrivileges = [
+    if parameter.privileges != _|_ {
+        for p in parameter.privileges if p.scope == "cluster" { p }
+    }
+]
+
+// LetVariable references → use the binding
+rules: [for r in _clusterPrivileges { ... }]
+
+if len(_clusterPrivileges) > 0 {
+    outputs: role: { ... }
+}</code></pre>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2766,10 +3118,62 @@ mountsArray := tpl.Helper("mountsArray").
         <div><div class="section-title">VelaCtx</div></div>
       </div>
       <p class="section-desc">Runtime context accessors. <code>defkit.VelaCtx()</code> returns a context object that compiles to CUE <code>context.*</code> references, evaluated by the controller at deploy time.</p>
-      <div class="placeholder-box">
-        <div class="pl-icon"><span class="material-icons-round">hourglass_empty</span></div>
-        <p>Full API reference for <strong>VelaCtx().Name()</strong>, <strong>AppName()</strong>, <strong>Namespace()</strong>, <strong>Revision()</strong>, <strong>ClusterVersion()</strong> — coming in Phase 3.</p>
-        <div class="pl-phase">Phase 3</div>
+      <!-- defkit.VelaCtx() -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.VelaCtx() *VelaContext</code>
+          <div class="method-meta">
+            <div class="method-title">VelaCtx</div>
+            <div class="method-desc">Returns a KubeVela context accessor. Call at the top of your template function or definition constructor. Each method returns a <code>Value</code> that produces the corresponding <code>context.*</code> CUE path. Use in <code>.Set()</code>, <code>defkit.Interpolation()</code>, and comparison expressions.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>vela := defkit.VelaCtx()
+
+// Context accessor methods
+vela.Name()                    // component name
+vela.AppName()                 // application name
+vela.Namespace()               // namespace
+vela.Revision()                // revision name
+vela.ClusterVersion().Minor()  // cluster minor version (int)
+
+// Typical usage
+resource := defkit.NewResource("apps/v1", "Deployment").
+    Set("metadata.name", vela.Name()).
+    Set("metadata.namespace", vela.Namespace()).
+    Set("metadata.labels[app.oam.dev/name]", vela.AppName()).
+    Set("metadata.labels[app.oam.dev/component]", vela.Name())
+
+// Cluster version comparison
+hpa := defkit.NewResourceWithConditionalVersion("HorizontalPodAutoscaler").
+    VersionIf(defkit.Lt(vela.ClusterVersion().Minor(), defkit.Lit(23)), "autoscaling/v2beta2").
+    VersionIf(defkit.Ge(vela.ClusterVersion().Minor(), defkit.Lit(23)), "autoscaling/v2")</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// VelaCtx method → CUE context path
+vela.Name()                   → context.name
+vela.AppName()                → context.appName
+vela.Namespace()              → context.namespace
+vela.Revision()               → context.revision
+vela.ClusterVersion().Minor() → context.clusterVersion.minor
+
+// In resource fields
+metadata: {
+    name:      context.name
+    namespace: context.namespace
+    labels: {
+        "app.oam.dev/name":      context.appName
+        "app.oam.dev/component": context.name
+    }
+}</code></pre>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2782,10 +3186,196 @@ mountsArray := tpl.Helper("mountsArray").
         <div><div class="section-title">Health &amp; Status DSL</div></div>
       </div>
       <p class="section-desc">Builder DSL for defining health evaluation logic and custom status. Generates the <code>status.healthPolicy</code> and <code>status.customStatus</code> CUE blocks consumed by the controller.</p>
-      <div class="placeholder-box">
-        <div class="pl-icon"><span class="material-icons-round">hourglass_empty</span></div>
-        <p>Full API reference for <strong>Health()</strong>, <strong>Status()</strong>, preset builders (<strong>DeploymentHealth</strong>, <strong>DaemonSetHealth</strong>, <strong>JobHealth</strong>) — coming in Phase 3.</p>
-        <div class="pl-phase">Phase 3</div>
+      <!-- ── HEALTH DSL ─────────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem;color:var(--text);">Health DSL</h3>
+
+      <!-- defkit.Health() -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.Health() *HealthBuilder</code>
+          <div class="method-meta">
+            <div class="method-title">Health</div>
+            <div class="method-desc">Builds a KubeVela <code>healthPolicy</code> block. Chain <code>.IntField(alias, statusPath, default)</code> to extract status integers, then <code>.HealthyWhen(conditions...)</code> to declare when the component is healthy. Call <code>.Build()</code> to produce the final CUE string. Used with <code>.HealthPolicy()</code> on the definition builder.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>return defkit.NewComponent("worker").
+    // ...
+    HealthPolicy(defkit.Health().
+        IntField("ready.updatedReplicas",  "status.updatedReplicas",  0).
+        IntField("ready.readyReplicas",    "status.readyReplicas",    0).
+        IntField("ready.replicas",         "status.replicas",         0).
+        IntField("ready.observedGeneration","status.observedGeneration",0).
+        HealthyWhen(
+            defkit.StatusEq("context.output.spec.replicas", "ready.readyReplicas"),
+            defkit.StatusEq("context.output.spec.replicas", "ready.updatedReplicas"),
+            defkit.StatusEq("context.output.spec.replicas", "ready.replicas"),
+            defkit.StatusOr(
+                defkit.StatusEq("ready.observedGeneration", "context.output.metadata.generation"),
+                "ready.observedGeneration > context.output.metadata.generation",
+            ),
+        ).Build())</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated healthPolicy</div>
+              <pre class="language-cue"><code>isHealth: {
+    let ready = {
+        updatedReplicas:    *0 | int &amp; context.output.status.updatedReplicas
+        readyReplicas:      *0 | int &amp; context.output.status.readyReplicas
+        replicas:           *0 | int &amp; context.output.status.replicas
+        observedGeneration: *0 | int &amp; context.output.status.observedGeneration
+    }
+    isHealth:
+        context.output.spec.replicas == ready.readyReplicas &amp;&amp;
+        context.output.spec.replicas == ready.updatedReplicas &amp;&amp;
+        context.output.spec.replicas == ready.replicas &amp;&amp;
+        (ready.observedGeneration == context.output.metadata.generation ||
+         ready.observedGeneration > context.output.metadata.generation)
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STATUS DSL ──────────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Status DSL</h3>
+
+      <!-- defkit.Status() -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.Status() *StatusBuilder</code>
+          <div class="method-meta">
+            <div class="method-title">Status</div>
+            <div class="method-desc">Builds a KubeVela <code>customStatus</code> block. Chain <code>.IntField(alias, statusPath, default)</code> to extract numeric status fields, then <code>.Message(template)</code> to define the display message using CUE string interpolation. Call <code>.Build()</code> to produce the CUE string. Used with <code>.CustomStatus()</code> on the definition builder.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>return defkit.NewComponent("task").
+    // ...
+    CustomStatus(defkit.Status().
+        IntField("status.active",    "status.active",    0).
+        IntField("status.failed",    "status.failed",    0).
+        IntField("status.succeeded", "status.succeeded", 0).
+        Message(`Active/Failed/Succeeded:\(status.active)/\(status.failed)/\(status.succeeded)`).
+        Build())</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated customStatus</div>
+              <pre class="language-cue"><code>customStatus: {
+    let status = {
+        active:    *0 | int &amp; context.output.status.active
+        failed:    *0 | int &amp; context.output.status.failed
+        succeeded: *0 | int &amp; context.output.status.succeeded
+    }
+    message: "Active/Failed/Succeeded:\(status.active)/\(status.failed)/\(status.succeeded)"
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PRESET BUILDERS ─────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Preset Builders</h3>
+
+      <!-- DeploymentHealth / DaemonSetHealth / JobHealth -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.DeploymentHealth() / defkit.DaemonSetHealth() / defkit.JobHealth()</code>
+          <div class="method-meta">
+            <div class="method-title">DeploymentHealth / DaemonSetHealth / JobHealth</div>
+            <div class="method-desc">Pre-built health policy builders for the three common workload types. They return a <code>*HealthBuilder</code> pre-configured with the correct <code>IntField</code> paths and standard <code>HealthyWhen</code> conditions. Call <code>.Build()</code> and pass to <code>.HealthPolicy()</code>. Use these instead of building from scratch for Deployment, DaemonSet, and Job workloads.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>// Job component: built-in job health
+return defkit.NewComponent("task").
+    Workload("batch/v1", "Job").
+    HealthPolicy(defkit.JobHealth().Build())
+
+// Deployment component: built-in deployment health
+return defkit.NewComponent("webservice").
+    Workload("apps/v1", "Deployment").
+    HealthPolicy(defkit.DeploymentHealth().Build())
+
+// DaemonSet component
+return defkit.NewComponent("daemon").
+    Workload("apps/v1", "DaemonSet").
+    HealthPolicy(defkit.DaemonSetHealth().Build())</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — standard health policies</div>
+              <pre class="language-cue"><code>// JobHealth checks for completion
+isHealth:
+    context.output.status.succeeded &gt; 0
+
+// DeploymentHealth checks all replicas ready
+isHealth:
+    context.output.spec.replicas ==
+    context.output.status.readyReplicas &amp;&amp;
+    context.output.spec.replicas ==
+    context.output.status.updatedReplicas
+
+// DaemonSetHealth checks desired == ready
+isHealth:
+    context.output.status.numberReady ==
+    context.output.status.desiredNumberScheduled</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DeploymentStatus / DaemonSetStatus -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.DeploymentStatus() / defkit.DaemonSetStatus()</code>
+          <div class="method-meta">
+            <div class="method-title">DeploymentStatus / DaemonSetStatus</div>
+            <div class="method-desc">Pre-built custom status builders for Deployment and DaemonSet workloads. They produce the standard <code>customStatus</code> message format showing readiness/update counts. Call <code>.Build()</code> and pass to <code>.CustomStatus()</code>.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>return defkit.NewComponent("worker").
+    Workload("apps/v1", "Deployment").
+    CustomStatus(defkit.DeploymentStatus().Build()).
+    HealthPolicy(defkit.DeploymentHealth().Build())
+
+return defkit.NewComponent("daemon").
+    Workload("apps/v1", "DaemonSet").
+    CustomStatus(defkit.DaemonSetStatus().Build()).
+    HealthPolicy(defkit.DaemonSetHealth().Build())</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated customStatus</div>
+              <pre class="language-cue"><code>// DeploymentStatus
+customStatus: {
+    let status = { ready: ..., updated: ..., total: ... }
+    message: "Ready:\(status.ready)/\(status.total) Updated:\(status.updated)"
+}
+
+// DaemonSetStatus
+customStatus: {
+    let status = { ready: ..., desired: ... }
+    message: "Ready:\(status.ready) Desired:\(status.desired)"
+}</code></pre>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
