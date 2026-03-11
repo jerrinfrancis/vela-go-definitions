@@ -3,453 +3,1092 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>defkit API Reference</title>
+  <title>defkit API Reference — KubeVela Definition SDK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
   <style>
+    :root {
+      --bg:            #0f172a;
+      --surface:       #1e293b;
+      --surface-2:     #162032;
+      --surface-hover: #2d3f55;
+      --border:        #334155;
+      --border-subtle: rgba(51,65,85,0.5);
+      --text:          #e2e8f0;
+      --text-muted:    #94a3b8;
+      --text-faint:    #64748b;
+      --blue:   #3b82f6; --blue-dim:   rgba(59,130,246,0.15);
+      --green:  #22c55e; --green-dim:  rgba(34,197,94,0.15);
+      --purple: #a855f7; --purple-dim: rgba(168,85,247,0.15);
+      --orange: #f97316; --orange-dim: rgba(249,115,22,0.15);
+      --cyan:   #06b6d4; --cyan-dim:   rgba(6,182,212,0.15);
+      --pink:   #ec4899; --pink-dim:   rgba(236,72,153,0.15);
+      --yellow: #eab308; --yellow-dim: rgba(234,179,8,0.15);
+      --sidebar-w: 272px;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 0.95rem;
-      line-height: 1.7;
-      color: #1a1a2e;
-      background: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.65; font-size: 0.9rem;
     }
 
+    /* ── SIDEBAR ─────────────────────────────── */
     #sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 260px;
-      height: 100vh;
-      background: #1e1e2e;
-      color: #cdd6f4;
-      overflow-y: auto;
-      padding: 1.5rem 0;
-      z-index: 100;
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--surface-2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto; z-index: 200;
+      display: flex; flex-direction: column;
     }
-
-    .sidebar-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #89b4fa;
-      padding: 0 1rem;
+    .sidebar-header {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(160deg, #162032, #1a1040 120%);
+      position: relative; overflow: hidden;
     }
-
-    .sidebar-subtitle {
-      font-size: 12px;
-      color: #6c7086;
-      padding: 0.25rem 1rem 0;
+    .sidebar-header::after {
+      content: ''; position: absolute;
+      bottom: -40px; right: -40px;
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%);
     }
-
-    .sidebar-divider {
-      border: none;
-      border-top: 1px solid #313244;
-      margin: 1rem 0;
-    }
-
-    #sidebar nav ul {
-      list-style: none;
-      padding: 0 0.5rem;
-    }
-
-    #sidebar nav ul li {
-      margin-bottom: 2px;
-    }
-
-    #sidebar a {
-      display: block;
-      padding: 0.4rem 1rem;
-      color: #cdd6f4;
-      text-decoration: none;
-      border-radius: 6px;
-      border-left: 3px solid transparent;
-      transition: background 0.15s;
-    }
-
-    #sidebar a:hover {
-      background: #313244;
-    }
-
-    #sidebar a.active {
-      background: #313244;
-      border-left: 3px solid #89b4fa;
-      color: #89b4fa;
-      padding-left: calc(1rem - 3px);
-    }
-
-    #content {
-      margin-left: 260px;
-      padding: 2rem 3rem;
-      max-width: 1200px;
-    }
-
-    .hero {
-      padding: 2rem 0 3rem;
-      border-bottom: 2px solid #e8e8f0;
-      margin-bottom: 2rem;
-    }
-
-    .hero h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 0.75rem;
-    }
-
-    .hero p {
-      color: #4a4a6a;
-      max-width: 620px;
-    }
-
-    section {
-      margin-top: 4rem;
-      padding-top: 1rem;
-    }
-
-    section h2 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      border-bottom: 2px solid #e8e8f0;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    section h3 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin: 1.5rem 0 0.5rem;
-    }
-
-    section p {
-      color: #3a3a5a;
-      margin-bottom: 1rem;
-    }
-
-    .code-pair {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-top: 1rem;
-    }
-
-    .code-column-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #6c7086;
+    .sidebar-logo {
+      display: inline-flex; align-items: center; gap: 0.5rem;
       margin-bottom: 0.4rem;
     }
-
-    pre[class*="language-"] {
-      background: #282a36;
-      border-radius: 8px;
-      padding: 1.2rem;
-      overflow-x: auto;
-      font-size: 13px;
-      line-height: 1.6;
+    .logo-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800; color: #fff;
+    }
+    .sidebar-title { font-size: 1rem; font-weight: 700; color: #c7d2fe; }
+    .sidebar-subtitle { font-size: 0.7rem; color: var(--text-faint); margin-top: 0.2rem; }
+    .sidebar-version {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: var(--purple-dim); border: 1px solid rgba(168,85,247,0.25);
+      color: #c084fc; font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 0.15rem 0.55rem; border-radius: 99px; margin-top: 0.6rem;
+    }
+    .sidebar-nav { padding: 0.75rem 0; flex: 1; }
+    .nav-group { margin-bottom: 0.25rem; }
+    .nav-group-label {
+      padding: 0.5rem 1.25rem 0.25rem;
+      font-size: 0.63rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-faint);
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.42rem 1.25rem;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.82rem; font-weight: 500;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-link.active {
+      color: var(--blue); border-left-color: var(--blue);
+      background: rgba(59,130,246,0.08);
+    }
+    .nav-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: currentColor; opacity: 0.6; flex-shrink: 0;
+    }
+    .nav-badge {
+      margin-left: auto; font-size: 0.62rem; font-weight: 700;
+      padding: 0.1rem 0.4rem; border-radius: 4px;
     }
 
-    code[class*="language-"] {
-      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-      font-size: 13px;
+    /* ── MAIN ─────────────────────────────────── */
+    #main { margin-left: var(--sidebar-w); min-height: 100vh; }
+
+    /* ── PAGE HEADER ─────────────────────────── */
+    .page-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1a1040 45%, #0a1628 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 3rem 2.5rem;
+      position: relative; overflow: hidden;
     }
+    .page-header::before {
+      content: ''; position: absolute; top: -80px; right: -80px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(168,85,247,0.14) 0%, transparent 65%);
+    }
+    .page-header::after {
+      content: ''; position: absolute; bottom: -60px; left: 30%;
+      width: 500px; height: 250px;
+      background: radial-gradient(circle, rgba(59,130,246,0.09) 0%, transparent 65%);
+    }
+    .header-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: var(--purple-dim); border: 1px solid rgba(168,85,247,0.3);
+      color: #c084fc; font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      padding: 0.2rem 0.7rem; border-radius: 99px; margin-bottom: 0.9rem;
+    }
+    .page-title {
+      font-size: 2.4rem; font-weight: 800; line-height: 1.15;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa 40%, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 0.6rem;
+    }
+    .page-desc {
+      color: var(--text-muted); font-size: 1rem; max-width: 640px; margin-bottom: 2rem;
+    }
+    .stats-row { display: flex; gap: 0.75rem; flex-wrap: wrap; position: relative; z-index: 1; }
+    .stat-card {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.8rem 1.3rem;
+      display: flex; flex-direction: column; gap: 0.1rem; min-width: 110px;
+    }
+    .stat-value { font-size: 1.7rem; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 0.67rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .stat-card.blue .stat-value  { color: var(--blue); }
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-card.purple .stat-value{ color: var(--purple); }
+    .stat-card.orange .stat-value{ color: var(--orange); }
+    .stat-card.cyan .stat-value  { color: var(--cyan); }
+
+    /* ── CONTENT ─────────────────────────────── */
+    .content { padding: 2.5rem 3rem; max-width: 1100px; }
+    .section { margin-bottom: 4rem; }
+    .section-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding-bottom: 0.75rem; margin-bottom: 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .section-title { font-size: 1.35rem; font-weight: 700; }
+    .section-desc { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 2rem; max-width: 700px; }
+
+    /* ── OVERVIEW CARDS ──────────────────────── */
+    .overview-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem; margin-bottom: 2.5rem;
+    }
+    .overview-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem;
+      transition: border-color 0.18s, transform 0.18s;
+    }
+    .overview-card:hover { border-color: var(--surface-hover); transform: translateY(-1px); }
+    .card-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+    .card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .card-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.55; }
+
+    /* ── FLOW DIAGRAM ────────────────────────── */
+    .flow-section { margin-bottom: 2.5rem; }
+    .flow-title { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; font-size: 0.75rem; }
+    .flow-diagram {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 2rem; overflow-x: auto;
+    }
+    .flow-steps {
+      display: flex; align-items: center; gap: 0;
+      min-width: 700px;
+    }
+    .flow-step {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 0.6rem; position: relative;
+    }
+    .flow-step-box {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.9rem 1rem;
+      text-align: center; width: 100%; max-width: 140px;
+      position: relative; z-index: 1;
+      transition: border-color 0.18s;
+    }
+    .flow-step-box:hover { border-color: var(--text-faint); }
+    .flow-step-icon { font-size: 1.4rem; margin-bottom: 0.35rem; }
+    .flow-step-name { font-size: 0.78rem; font-weight: 700; }
+    .flow-step-sub { font-size: 0.67rem; color: var(--text-faint); margin-top: 0.15rem; }
+    .flow-arrow {
+      flex-shrink: 0; width: 40px; display: flex; align-items: center;
+      justify-content: center; color: var(--text-faint); font-size: 1.1rem;
+      padding-bottom: 1.6rem;
+    }
+    .flow-step.blue  .flow-step-box { border-color: rgba(59,130,246,0.4);  background: rgba(59,130,246,0.06); }
+    .flow-step.green .flow-step-box { border-color: rgba(34,197,94,0.4);   background: rgba(34,197,94,0.06); }
+    .flow-step.purple.flow-step-box { border-color: rgba(168,85,247,0.4);  background: rgba(168,85,247,0.06); }
+    .flow-step.orange.flow-step-box { border-color: rgba(249,115,22,0.4);  background: rgba(249,115,22,0.06); }
+    .flow-step.cyan  .flow-step-box { border-color: rgba(6,182,212,0.4);   background: rgba(6,182,212,0.06); }
+    .flow-step.blue   .flow-step-name { color: #60a5fa; }
+    .flow-step.green  .flow-step-name { color: #4ade80; }
+    .flow-step.purple .flow-step-name { color: #c084fc; }
+    .flow-step.orange .flow-step-name { color: #fb923c; }
+    .flow-step.cyan   .flow-step-name { color: #22d3ee; }
+
+    /* ── COMPARISON TABLE ────────────────────── */
+    .comparison-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-bottom: 2rem; }
+    .comparison-table th {
+      text-align: left; padding: 0.55rem 1rem;
+      background: var(--surface-2); color: var(--text-muted);
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+    .comparison-table td {
+      padding: 0.55rem 1rem; border-bottom: 1px solid var(--border-subtle);
+      vertical-align: top;
+    }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .comparison-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; }
+    .check { color: var(--green); }
+    .cross { color: var(--text-faint); }
+    .neutral { color: var(--text-muted); }
+
+    /* ── API METHOD CARDS ────────────────────── */
+    .method-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 1.25rem; overflow: hidden;
+      transition: border-color 0.18s;
+    }
+    .method-card:hover { border-color: #475569; }
+    .method-header {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 1rem;
+    }
+    .method-sig {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 600;
+      color: #93c5fd; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 0.25rem 0.65rem; white-space: nowrap; flex-shrink: 0; margin-top: 0.1rem;
+    }
+    .method-meta { flex: 1; }
+    .method-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .method-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+    .method-body { padding: 1.25rem; }
+    .method-applies {
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .applies-label { font-size: 0.7rem; color: var(--text-faint); }
+
+    /* ── TYPE PILLS ──────────────────────────── */
+    .pill {
+      font-size: 0.67rem; font-weight: 600; padding: 0.15rem 0.55rem;
+      border-radius: 99px; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .pill-component { background: var(--blue-dim);   color: #60a5fa; }
+    .pill-trait     { background: var(--orange-dim);  color: #fb923c; }
+    .pill-policy    { background: var(--pink-dim);    color: #f472b6; }
+    .pill-workflow  { background: var(--cyan-dim);    color: #22d3ee; }
+    .pill-param     { background: var(--yellow-dim);  color: #fbbf24; }
+    .pill-all       { background: var(--purple-dim);  color: #c084fc; }
+    .pill-template  { background: var(--green-dim);   color: #4ade80; }
+
+    /* ── CODE BLOCKS ─────────────────────────── */
+    .code-pair {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    @media (max-width: 800px) { .code-pair { grid-template-columns: 1fr; } }
+    .code-block { border-radius: 9px; overflow: hidden; border: 1px solid var(--border); }
+    .code-label {
+      padding: 0.3rem 0.85rem; font-size: 0.67rem; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .code-label.go  { background: rgba(59,130,246,0.1); color: #93c5fd; }
+    .code-label.cue { background: rgba(34,197,94,0.1);  color: #86efac; }
+    .code-label .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.8; }
+    .code-block pre[class*="language-"] {
+      margin: 0; border-radius: 0; background: #0d1117 !important;
+      font-family: 'JetBrains Mono', monospace !important; font-size: 0.77rem !important;
+    }
+    .code-block pre { margin: 0; }
+
+    /* ── INTEGRATION DIAGRAM ─────────────────── */
+    .integration-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 900px) { .integration-grid { grid-template-columns: 1fr; } }
+    .integration-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem;
+    }
+    .int-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .int-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .int-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+    .int-tag {
+      display: inline-block; margin-top: 0.6rem;
+      font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem;
+      border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── QUICKSTART ──────────────────────────── */
+    .quickstart-steps { display: flex; flex-direction: column; gap: 0; }
+    .qs-step {
+      display: flex; gap: 1.25rem; padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .qs-step:last-child { border-bottom: none; }
+    .qs-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--blue-dim); border: 1px solid rgba(59,130,246,0.3);
+      color: var(--blue); font-size: 0.78rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;
+    }
+    .qs-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .qs-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.6rem; }
+
+    /* ── PLACEHOLDER ─────────────────────────── */
+    .placeholder-box {
+      background: var(--surface); border: 1px dashed var(--border);
+      border-radius: 12px; padding: 2.5rem;
+      text-align: center; color: var(--text-faint);
+    }
+    .placeholder-box p { font-size: 0.85rem; }
+    .placeholder-box .pl-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .placeholder-box .pl-phase {
+      display: inline-flex; background: var(--purple-dim); border: 1px solid rgba(168,85,247,0.25);
+      color: #c084fc; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.65rem;
+      border-radius: 99px; margin-top: 0.5rem;
+    }
+
+    /* ── INFO BOX ────────────────────────────── */
+    .info-box {
+      background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.25);
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.83rem; color: #93c5fd; margin-bottom: 1.5rem;
+      display: flex; gap: 0.75rem; align-items: flex-start;
+    }
+    .info-box .icon { flex-shrink: 0; font-size: 1rem; margin-top: 0.1rem; }
+
+    /* ── SCROLLBAR ───────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
 <body>
 
-<aside id="sidebar">
-  <div class="sidebar-title">defkit API</div>
-  <div class="sidebar-subtitle">KubeVela Definition Reference</div>
-  <hr class="sidebar-divider">
-  <nav>
-    <ul>
-      <li><a href="#definition-builders">Definition Builders</a></li>
-      <li><a href="#parameter-builders">Parameter Builders</a></li>
-      <li><a href="#template-methods">Template Methods</a></li>
-      <li><a href="#resource-builders">Resource Builders</a></li>
-      <li><a href="#value-expressions">Value Expressions</a></li>
-      <li><a href="#velactx">VelaCtx</a></li>
-      <li><a href="#health-status">Health &amp; Status DSL</a></li>
-      <li><a href="#full-examples">Full Examples</a></li>
-    </ul>
-  </nav>
-</aside>
-
-<main id="content">
-
-  <div class="hero">
-    <h1>defkit API Reference</h1>
-    <p>The Go fluent API for building KubeVela X-Definitions programmatically. Replace CUE/YAML templates with type-safe Go code that compiles to standard KubeVela definitions.</p>
+<!-- ═══════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="logo-icon">dk</div>
+      <span class="sidebar-title">defkit</span>
+    </div>
+    <div class="sidebar-subtitle">KubeVela Definition SDK for Go</div>
+    <div class="sidebar-version">● API Reference</div>
   </div>
 
-  <section id="definition-builders">
-    <h2>Definition Builders</h2>
-    <p>Top-level constructors that create ComponentDefinition, TraitDefinition, PolicyDefinition, and WorkflowStepDefinition objects. Each builder is registered globally via <code>defkit.Register()</code> in an <code>init()</code> function.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">func MyComponent() *defkit.ComponentDefinition {
-    return defkit.NewComponent("my-component").
-        Description("A custom workload component").
-        Workload("apps/v1", "Deployment").
-        Params(imageParam, replicasParam).
-        Template(buildTemplate)
-}</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">// Generated CUE output
-#my-component: {
-    type: "component"
-    name: "my-component"
-    description: "A custom workload component"
-    workload: {
-        apiVersion: "apps/v1"
-        kind: "Deployment"
-    }
-}</code></pre>
-      </div>
+  <div class="sidebar-nav">
+
+    <div class="nav-group">
+      <div class="nav-group-label">Introduction</div>
+      <a href="#overview"      class="nav-link active"><span class="nav-dot"></span>Overview</a>
+      <a href="#quickstart"    class="nav-link"><span class="nav-dot"></span>Quick Start</a>
+      <a href="#architecture"  class="nav-link"><span class="nav-dot"></span>Architecture &amp; Flow</a>
+      <a href="#integration"   class="nav-link"><span class="nav-dot"></span>Integration</a>
     </div>
-  </section>
 
-  <section id="parameter-builders">
-    <h2>Parameter Builders</h2>
-    <p>Fluent builders for defining typed input parameters. Each builder supports chaining for required flags, defaults, descriptions, and validation constraints.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">image := defkit.String("image").
-    Required().
-    Description("Container image to deploy")
-
-replicas := defkit.Int("replicas").
-    Default(1).
-    Description("Number of pod replicas")</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">parameter: {
-    image: string
-    replicas: *1 | int
-}
-// image is required (no default)
-// replicas defaults to 1</code></pre>
-      </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Definition Builders</div>
+      <a href="#definition-builders" class="nav-link"><span class="nav-dot"></span>NewComponent</a>
+      <a href="#definition-builders" class="nav-link"><span class="nav-dot"></span>NewTrait</a>
+      <a href="#definition-builders" class="nav-link"><span class="nav-dot"></span>NewPolicy</a>
+      <a href="#definition-builders" class="nav-link"><span class="nav-dot"></span>NewWorkflowStep</a>
     </div>
-  </section>
 
-  <section id="template-methods">
-    <h2>Template Methods</h2>
-    <p>Methods on <code>*defkit.Template</code> that control what the definition outputs — primary resources, patch containers, and auxiliary outputs.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">func buildTemplate(tpl *defkit.Template) {
-    resource := defkit.NewResource("apps/v1", "Deployment")
-    // ... configure resource
-    tpl.Output(resource)
-    tpl.Outputs("svc", serviceResource)
-}</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">output: {
-    apiVersion: "apps/v1"
-    kind: "Deployment"
-    // ... resource spec
-}
-outputs: svc: {
-    apiVersion: "v1"
-    kind: "Service"
-}</code></pre>
-      </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Parameter API</div>
+      <a href="#parameter-builders" class="nav-link"><span class="nav-dot"></span>Scalar Types</a>
+      <a href="#parameter-builders" class="nav-link"><span class="nav-dot"></span>Collection Types</a>
+      <a href="#parameter-builders" class="nav-link"><span class="nav-dot"></span>Complex Types</a>
+      <a href="#parameter-builders" class="nav-link"><span class="nav-dot"></span>Chain Methods</a>
     </div>
-  </section>
 
-  <section id="resource-builders">
-    <h2>Resource Builders</h2>
-    <p>Builders for constructing Kubernetes resource objects. Resources are typed by apiVersion and kind, with fluent setters for metadata, spec fields, and nested structures.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">resource := defkit.NewResource("apps/v1", "Deployment").
-    Set("metadata.name", vela.Name()).
-    Set("spec.replicas", defkit.Reference("parameter.replicas")).
-    Set("spec.template.spec.containers[0].image",
-        defkit.Reference("parameter.image"))</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">output: {
-    apiVersion: "apps/v1"
-    kind:       "Deployment"
-    metadata: name: context.name
-    spec: {
-        replicas: parameter.replicas
-        template: spec: containers: [{
-            image: parameter.image
-        }]
-    }
-}</code></pre>
-      </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Template API</div>
+      <a href="#template-methods" class="nav-link"><span class="nav-dot"></span>Output Methods</a>
+      <a href="#template-methods" class="nav-link"><span class="nav-dot"></span>Patch Methods</a>
+      <a href="#template-methods" class="nav-link"><span class="nav-dot"></span>Helper Builder</a>
+      <a href="#template-methods" class="nav-link"><span class="nav-dot"></span>Raw CUE Blocks</a>
     </div>
-  </section>
 
-  <section id="value-expressions">
-    <h2>Value Expressions</h2>
-    <p>Primitives for embedding literal values and parameter references into resource fields. These are the building blocks of dynamic resource construction.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">defkit.Lit("always")
-defkit.Lit(3)
-defkit.Reference("parameter.image")
-defkit.Reference("context.name")
-defkit.Concat(vela.Name(), defkit.Lit("-svc"))</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">"always"
-3
-parameter.image
-context.name
-context.name + "-svc"</code></pre>
-      </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Resource &amp; Values</div>
+      <a href="#resource-builders"  class="nav-link"><span class="nav-dot"></span>Resource Builders</a>
+      <a href="#value-expressions"  class="nav-link"><span class="nav-dot"></span>Value Expressions</a>
+      <a href="#velactx"            class="nav-link"><span class="nav-dot"></span>VelaCtx</a>
+      <a href="#health-status"      class="nav-link"><span class="nav-dot"></span>Health &amp; Status DSL</a>
     </div>
-  </section>
 
-  <section id="velactx">
-    <h2>VelaCtx</h2>
-    <p>The <code>defkit.VelaCtx()</code> accessor provides runtime context values injected by KubeVela — application name, namespace, component name, and more.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">vela := defkit.VelaCtx()
-
-vela.Name()
-vela.Namespace()
-vela.AppName()
-vela.ClusterName()</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">context.name
-context.namespace
-context.appName
-context.clusterName</code></pre>
-      </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Examples</div>
+      <a href="#full-examples" class="nav-link"><span class="nav-dot"></span>Component Example</a>
+      <a href="#full-examples" class="nav-link"><span class="nav-dot"></span>Trait Example</a>
+      <a href="#full-examples" class="nav-link"><span class="nav-dot"></span>Policy Example</a>
+      <a href="#full-examples" class="nav-link"><span class="nav-dot"></span>WorkflowStep Example</a>
     </div>
-  </section>
 
-  <section id="health-status">
-    <h2>Health &amp; Status DSL</h2>
-    <p>Builders for defining how KubeVela evaluates component and trait health. Conditions map resource field values to healthy/unhealthy states.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">defkit.Health().
-    HealthyWhen(
-        defkit.Field("status.readyReplicas").
-            Equals(defkit.Reference("spec.replicas")),
-    ).
-    Message("Waiting for replicas to be ready")</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">isHealth: output.status.readyReplicas ==
-          output.spec.replicas
-message: "Waiting for replicas to be ready"</code></pre>
-      </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div class="header-badge">● KubeVela SDK</div>
+    <h1 class="page-title">defkit API Reference</h1>
+    <p class="page-desc">The Go fluent SDK for authoring KubeVela X-Definitions. Write type-safe, testable, IDE-friendly definitions in Go — compiled transparently to CUE.</p>
+    <div class="stats-row">
+      <div class="stat-card blue">  <div class="stat-value">4</div>  <div class="stat-label">Def Types</div></div>
+      <div class="stat-card green"> <div class="stat-value">48</div> <div class="stat-label">API Methods</div></div>
+      <div class="stat-card purple"><div class="stat-value">13+</div><div class="stat-label">Param Types</div></div>
+      <div class="stat-card orange"><div class="stat-value">104</div><div class="stat-label">Definitions</div></div>
+      <div class="stat-card cyan">  <div class="stat-value">Go</div> <div class="stat-label">Language</div></div>
     </div>
-  </section>
+  </header>
 
-  <section id="full-examples">
-    <h2>Full Examples</h2>
-    <p>Complete, working component definitions showing the full defkit pattern from parameter declaration through template output and registration.</p>
-    <div class="code-pair">
-      <div>
-        <div class="code-column-label">Go</div>
-        <pre><code class="language-go">func WebService() *defkit.ComponentDefinition {
-    image := defkit.String("image").Required().
-        Description("Container image")
-    port := defkit.Int("port").Default(8080).
-        Description("Service port")
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ══════════════════════════════════
+         OVERVIEW
+    ══════════════════════════════════ -->
+    <section id="overview" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--blue-dim);">📖</div>
+        <div>
+          <div class="section-title">What is defkit?</div>
+        </div>
+      </div>
+      <p class="section-desc">defkit is a Go SDK that lets platform engineers author KubeVela X-Definitions — ComponentDefinition, TraitDefinition, PolicyDefinition, WorkflowStepDefinition — using native Go code. The Go code compiles to CUE transparently: you never need to write or see CUE.</p>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <div class="card-icon">🛡️</div>
+          <div class="card-title">Type Safety</div>
+          <div class="card-desc">Catch configuration errors at Go compile time, not at Kubernetes deploy time. Full type inference for all parameter types.</div>
+        </div>
+        <div class="overview-card">
+          <div class="card-icon">💡</div>
+          <div class="card-title">IDE Support</div>
+          <div class="card-desc">Full autocompletion, inline documentation, and refactoring in any Go IDE. No CUE plugin required.</div>
+        </div>
+        <div class="overview-card">
+          <div class="card-icon">🧪</div>
+          <div class="card-title">Testable</div>
+          <div class="card-desc">Unit-test definitions with standard <code>go test</code> and Gomega matchers. No cluster needed for unit tests.</div>
+        </div>
+        <div class="overview-card">
+          <div class="card-icon">📦</div>
+          <div class="card-title">Distributable</div>
+          <div class="card-desc">Share definitions as standard Go packages via <code>go get</code>. Version-controlled alongside your platform code.</div>
+        </div>
+        <div class="overview-card">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">CUE Compatible</div>
+          <div class="card-desc">Produces the same CUE output consumed by the KubeVela controller. Mix Go-authored and CUE-authored definitions freely.</div>
+        </div>
+        <div class="overview-card">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">Fluent API</div>
+          <div class="card-desc">Method-chaining builder pattern makes definitions readable and concise. No YAML, no CUE schema wrestling.</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <span class="icon">ℹ️</span>
+        <span>Both defkit (Go) and the native CUE approach produce identical output consumed by the KubeVela controller. Choose defkit when your team is Go-proficient or when definitions require complex conditional logic and unit testing.</span>
+      </div>
+
+      <!-- Go vs CUE comparison -->
+      <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; font-size:0.75rem;">When to Use Go vs CUE</h3>
+      <table class="comparison-table" style="border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:2.5rem;">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Go (defkit)</th>
+            <th>CUE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Team already proficient in Go</td>
+            <td class="check">✓ Recommended</td>
+            <td class="neutral">Works too</td>
+          </tr>
+          <tr>
+            <td>Complex conditional template logic</td>
+            <td class="check">✓ Clearer structure</td>
+            <td class="neutral">Possible, verbose</td>
+          </tr>
+          <tr>
+            <td>Unit testing without a cluster</td>
+            <td class="check">✓ go test + Gomega</td>
+            <td class="cross">No native support</td>
+          </tr>
+          <tr>
+            <td>Share definitions as packages</td>
+            <td class="check">✓ go get</td>
+            <td class="neutral">Manual copying</td>
+          </tr>
+          <tr>
+            <td>Simple definitions, few parameters</td>
+            <td class="neutral">Works fine</td>
+            <td class="check">✓ Simpler to start</td>
+          </tr>
+          <tr>
+            <td>Quick one-off experiments</td>
+            <td class="neutral">Slightly more setup</td>
+            <td class="check">✓ Less boilerplate</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ══════════════════════════════════
+         QUICK START
+    ══════════════════════════════════ -->
+    <section id="quickstart" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--green-dim);">🚀</div>
+        <div><div class="section-title">Quick Start</div></div>
+      </div>
+      <p class="section-desc">From zero to a working KubeVela ComponentDefinition in 4 steps.</p>
+
+      <div class="quickstart-steps">
+        <div class="qs-step">
+          <div class="qs-num">1</div>
+          <div>
+            <div class="qs-title">Initialize a definition module</div>
+            <div class="qs-desc">Use the <code>vela</code> CLI to scaffold the Go module with the correct directory structure.</div>
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>bash</div>
+              <pre class="language-bash"><code>vela def init-module --name my-platform \
+  --components webservice,worker \
+  --traits scaler</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="qs-step">
+          <div class="qs-num">2</div>
+          <div>
+            <div class="qs-title">Write a definition in Go</div>
+            <div class="qs-desc">Open the scaffolded file and use the defkit fluent API to define parameters and template.</div>
+            <div class="code-pair">
+              <div class="code-block">
+                <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+                <pre class="language-go"><code>package components
+
+import "github.com/oam-dev/kubevela/pkg/definition/defkit"
+
+func Webservice() *defkit.ComponentDefinition {
+    image    := defkit.String("image").Required()
+    replicas := defkit.Int("replicas").Default(1)
 
     return defkit.NewComponent("webservice").
-        Description("HTTP web service component").
+        Description("Web service component").
         Workload("apps/v1", "Deployment").
-        Params(image, port).
-        Template(webServiceTemplate)
+        Params(image, replicas).
+        Template(webserviceTemplate)
 }
 
-func webServiceTemplate(tpl *defkit.Template) {
+func webserviceTemplate(tpl *defkit.Template) {
     vela := defkit.VelaCtx()
-    deploy := defkit.NewResource("apps/v1", "Deployment").
-        Set("metadata.name", vela.Name()).
-        Set("spec.replicas", defkit.Lit(1)).
-        Set("spec.template.spec.containers[0].image",
-            defkit.Reference("parameter.image"))
-    tpl.Output(deploy)
+    tpl.Output(
+        defkit.NewResource("apps/v1", "Deployment").
+            Set("metadata.name", vela.Name()).
+            Set("spec.replicas",
+                defkit.Reference("replicas")),
+    )
 }
 
-func init() { defkit.Register(WebService()) }</code></pre>
-      </div>
-      <div>
-        <div class="code-column-label">CUE</div>
-        <pre><code class="language-cue">// Equivalent CUE template
-parameter: {
-    image: string
-    port:  *8080 | int
-}
-
-output: {
+func init() { defkit.Register(Webservice()) }</code></pre>
+              </div>
+              <div class="code-block">
+                <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+                <pre class="language-cue"><code>webservice: {
+  type: "component"
+  description: "Web service component"
+  attributes: workload: definition: {
     apiVersion: "apps/v1"
     kind:       "Deployment"
+  }
+}
+template: {
+  output: {
+    apiVersion: "apps/v1"
+    kind: "Deployment"
     metadata: name: context.name
-    spec: {
-        replicas: 1
-        template: spec: containers: [{
-            image: parameter.image
-        }]
-    }
+    spec: replicas: parameter.replicas
+  }
+  parameter: {
+    // +usage=Container image
+    image:    string
+    replicas: *1 | int
+  }
 }</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qs-step">
+          <div class="qs-num">3</div>
+          <div>
+            <div class="qs-title">Validate &amp; generate</div>
+            <div class="qs-desc">Validate the module compiles and generates valid CUE.</div>
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>bash</div>
+              <pre class="language-bash"><code>vela def validate-module ./my-platform
+vela def list-module ./my-platform</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="qs-step">
+          <div class="qs-num">4</div>
+          <div>
+            <div class="qs-title">Apply to cluster</div>
+            <div class="qs-desc">Deploy all definitions to your KubeVela cluster in one command.</div>
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>bash</div>
+              <pre class="language-bash"><code># Dry-run first
+vela def apply-module ./my-platform --dry-run
+
+# Apply (overwrite if definitions already exist)
+vela def apply-module ./my-platform --conflict overwrite</code></pre>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-</main>
+    <!-- ══════════════════════════════════
+         ARCHITECTURE & FLOW
+    ══════════════════════════════════ -->
+    <section id="architecture" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--purple-dim);">🏗️</div>
+        <div><div class="section-title">Architecture &amp; Data Flow</div></div>
+      </div>
+      <p class="section-desc">defkit sits between your Go platform code and the KubeVela controller. It compiles Go method chains into CUE templates, which the controller evaluates at runtime to produce Kubernetes resources.</p>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+      <div class="flow-section">
+        <div class="flow-title">End-to-End Flow</div>
+        <div class="flow-diagram">
+          <div class="flow-steps">
+
+            <div class="flow-step blue">
+              <div class="flow-step-box">
+                <div class="flow-step-icon">📝</div>
+                <div class="flow-step-name">Go Code</div>
+                <div class="flow-step-sub">defkit fluent API</div>
+              </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <div class="flow-step purple">
+              <div class="flow-step-box">
+                <div class="flow-step-icon">⚙️</div>
+                <div class="flow-step-name">defkit SDK</div>
+                <div class="flow-step-sub">Compiles to CUE</div>
+              </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <div class="flow-step green">
+              <div class="flow-step-box">
+                <div class="flow-step-icon">📄</div>
+                <div class="flow-step-name">CUE Template</div>
+                <div class="flow-step-sub">X-Definition YAML</div>
+              </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <div class="flow-step orange">
+              <div class="flow-step-box">
+                <div class="flow-step-icon">🎮</div>
+                <div class="flow-step-name">KubeVela</div>
+                <div class="flow-step-sub">Controller evaluates</div>
+              </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <div class="flow-step cyan">
+              <div class="flow-step-box">
+                <div class="flow-step-icon">☸️</div>
+                <div class="flow-step-name">Kubernetes</div>
+                <div class="flow-step-sub">Resources applied</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Second row: Application author flow -->
+          <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+            <div style="font-size:0.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:1rem;">Application Author Flow (Runtime)</div>
+            <div class="flow-steps">
+              <div class="flow-step blue">
+                <div class="flow-step-box">
+                  <div class="flow-step-icon">👤</div>
+                  <div class="flow-step-name">App Author</div>
+                  <div class="flow-step-sub">Application YAML</div>
+                </div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step purple">
+                <div class="flow-step-box">
+                  <div class="flow-step-icon">🔍</div>
+                  <div class="flow-step-name">CUE Eval</div>
+                  <div class="flow-step-sub">Params injected</div>
+                </div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step green">
+                <div class="flow-step-box">
+                  <div class="flow-step-icon">📋</div>
+                  <div class="flow-step-name">Rendered</div>
+                  <div class="flow-step-sub">K8s manifests</div>
+                </div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step orange">
+                <div class="flow-step-box">
+                  <div class="flow-step-icon">🔄</div>
+                  <div class="flow-step-name">ResourceTracker</div>
+                  <div class="flow-step-sub">Lifecycle mgmt</div>
+                </div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step cyan">
+                <div class="flow-step-box">
+                  <div class="flow-step-icon">✅</div>
+                  <div class="flow-step-name">Health Check</div>
+                  <div class="flow-step-sub">Status evaluated</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module structure -->
+      <h3 style="font-size:0.75rem; font-weight:700; margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em;">Module Structure</h3>
+      <div class="code-block" style="margin-bottom:2rem;">
+        <div class="code-label go"><span class="dot"></span>directory layout</div>
+        <pre class="language-bash"><code>my-platform/
+├── module.yaml              # Module metadata (name, description, version)
+├── go.mod
+├── go.sum
+├── cmd/register/main.go     # Registry entry point — imports all packages
+├── components/
+│   ├── webservice.go        # ComponentDefinition — Deployment workload
+│   ├── worker.go            # ComponentDefinition — background worker
+│   └── statefulset.go       # ComponentDefinition — StatefulSet workload
+├── traits/
+│   ├── env.go               # TraitDefinition — environment variables
+│   ├── scaler.go            # TraitDefinition — replica scaling
+│   └── hpa.go               # TraitDefinition — HPA autoscaling
+├── policies/
+│   ├── override.go          # PolicyDefinition — parameter override
+│   └── garbage-collect.go   # PolicyDefinition — GC policies
+└── workflowsteps/
+    ├── deploy.go             # WorkflowStepDefinition — deploy step
+    └── apply-object.go      # WorkflowStepDefinition — apply K8s object</code></pre>
+      </div>
+
+      <!-- Registration pattern -->
+      <h3 style="font-size:0.75rem; font-weight:700; margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em;">Registration Pattern</h3>
+      <div class="code-pair" style="margin-bottom:2rem;">
+        <div class="code-block">
+          <div class="code-label go"><span class="dot"></span>definition file</div>
+          <pre class="language-go"><code>package components
+
+import "github.com/.../defkit"
+
+func Webservice() *defkit.ComponentDefinition {
+    return defkit.NewComponent("webservice").
+        Description("...").
+        Workload("apps/v1", "Deployment").
+        Params(...)
+}
+
+// init() is called automatically on import
+func init() {
+    defkit.Register(Webservice())
+}</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label go"><span class="dot"></span>cmd/register/main.go</div>
+          <pre class="language-go"><code>package main
+
+import (
+    "fmt"
+    "github.com/.../defkit"
+
+    // Blank imports trigger init() in each package,
+    // registering all definitions automatically
+    _ "my-platform/components"
+    _ "my-platform/traits"
+    _ "my-platform/policies"
+    _ "my-platform/workflowsteps"
+)
+
+func main() {
+    // Exports all registered definitions as JSON
+    fmt.Println(defkit.ToJSON())
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         INTEGRATION
+    ══════════════════════════════════ -->
+    <section id="integration" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--cyan-dim);">🔗</div>
+        <div><div class="section-title">Integration</div></div>
+      </div>
+      <p class="section-desc">defkit integrates with the KubeVela ecosystem through well-defined extension points. Each definition type maps to a Kubernetes CRD managed by the KubeVela controller.</p>
+
+      <div class="integration-grid">
+        <div class="integration-card">
+          <div class="int-icon">🧩</div>
+          <div class="int-title">ComponentDefinition</div>
+          <div class="int-desc">Defines a workload type. Maps Go template to Kubernetes resources (Deployment, StatefulSet, Job, etc.). End users reference by name in Application YAML.</div>
+          <div class="int-tag" style="background:var(--blue-dim);color:#60a5fa;">core.oam.dev/v1beta1</div>
+        </div>
+        <div class="integration-card">
+          <div class="int-icon">🎛️</div>
+          <div class="int-title">TraitDefinition</div>
+          <div class="int-desc">Patches or augments a workload. Uses CUE patch semantics to modify the primary output (e.g., inject env vars, set replica count, add sidecars).</div>
+          <div class="int-tag" style="background:var(--orange-dim);color:#fb923c;">core.oam.dev/v1beta1</div>
+        </div>
+        <div class="integration-card">
+          <div class="int-icon">📜</div>
+          <div class="int-title">PolicyDefinition</div>
+          <div class="int-desc">Controls deployment topology and behavior. Used for multi-cluster override, garbage collection rules, and apply-once semantics.</div>
+          <div class="int-tag" style="background:var(--pink-dim);color:#f472b6;">core.oam.dev/v1alpha1</div>
+        </div>
+        <div class="integration-card">
+          <div class="int-icon">⚡</div>
+          <div class="int-title">WorkflowStepDefinition</div>
+          <div class="int-desc">Defines automation steps for the application workflow engine. Steps run sequentially or in parallel as part of Application deployment.</div>
+          <div class="int-tag" style="background:var(--cyan-dim);color:#22d3ee;">core.oam.dev/v1beta1</div>
+        </div>
+        <div class="integration-card">
+          <div class="int-icon">🔍</div>
+          <div class="int-title">Health Evaluation</div>
+          <div class="int-desc">defkit's Health DSL generates <code>status.customStatus</code> and <code>status.healthPolicy</code> CUE blocks. The controller uses these to determine component health state.</div>
+          <div class="int-tag" style="background:var(--green-dim);color:#4ade80;">HealthPolicy CUE</div>
+        </div>
+        <div class="integration-card">
+          <div class="int-icon">🌐</div>
+          <div class="int-title">vela CLI Integration</div>
+          <div class="int-desc">The <code>vela def</code> subcommands handle compilation, validation, and deployment. <code>apply-module</code> compiles Go → CUE → YAML and applies to cluster in one step.</div>
+          <div class="int-tag" style="background:var(--purple-dim);color:#c084fc;">vela def apply-module</div>
+        </div>
+      </div>
+
+      <!-- Definition type pills reference -->
+      <h3 style="font-size:0.75rem; font-weight:700; margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em;">Definition Type Color Codes</h3>
+      <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:2rem;">
+        <span class="pill pill-component">● Component</span>
+        <span class="pill pill-trait">● Trait</span>
+        <span class="pill pill-policy">● Policy</span>
+        <span class="pill pill-workflow">● WorkflowStep</span>
+        <span class="pill pill-param">● Parameter</span>
+        <span class="pill pill-template">● Template</span>
+        <span class="pill pill-all">● All Types</span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);">These color codes are used throughout the API reference to indicate which definition type each method applies to.</p>
+    </section>
+
+    <!-- ══════════════════════════════════
+         DEFINITION BUILDERS (Phase 2)
+    ══════════════════════════════════ -->
+    <section id="definition-builders" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--blue-dim);">🏭</div>
+        <div>
+          <div class="section-title">Definition Builders</div>
+        </div>
+      </div>
+      <p class="section-desc">Top-level factory functions that create the four definition types. Each returns a builder with a fluent chain for configuring the definition.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for <strong>NewComponent</strong>, <strong>NewTrait</strong>, <strong>NewPolicy</strong>, <strong>NewWorkflowStep</strong> and all their chain methods — coming in Phase 2.</p>
+        <div class="pl-phase">Phase 2</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         PARAMETER BUILDERS (Phase 2)
+    ══════════════════════════════════ -->
+    <section id="parameter-builders" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--yellow-dim);">🔧</div>
+        <div><div class="section-title">Parameter Builders</div></div>
+      </div>
+      <p class="section-desc">Construct typed parameters that map directly to CUE types. Parameters are defined once and referenced in template functions by the captured Go variable.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for all parameter types (<strong>String</strong>, <strong>Int</strong>, <strong>Bool</strong>, <strong>Enum</strong>, <strong>Struct</strong>, <strong>Array</strong>, <strong>OneOf</strong>, etc.) and chain methods — coming in Phase 2.</p>
+        <div class="pl-phase">Phase 2</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         TEMPLATE METHODS (Phase 3)
+    ══════════════════════════════════ -->
+    <section id="template-methods" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--green-dim);">📤</div>
+        <div><div class="section-title">Template Methods</div></div>
+      </div>
+      <p class="section-desc">The <code>*defkit.Template</code> context object passed to the template function. Manages output resources, patch operations, and named helpers.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for <strong>tpl.Output</strong>, <strong>tpl.Patch</strong>, <strong>tpl.UsePatchContainer</strong>, <strong>tpl.Helper</strong>, raw CUE block methods — coming in Phase 3.</p>
+        <div class="pl-phase">Phase 3</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         RESOURCE BUILDERS (Phase 3)
+    ══════════════════════════════════ -->
+    <section id="resource-builders" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--orange-dim);">🏗️</div>
+        <div><div class="section-title">Resource Builders</div></div>
+      </div>
+      <p class="section-desc">Fluent builders for constructing Kubernetes resource manifests. Path syntax supports dot-notation, array indices, and bracket notation.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for <strong>NewResource</strong>, <strong>Set/SetIf</strong>, <strong>ForEach/ForEachWith</strong>, <strong>ItemBuilder</strong>, conditional versioning — coming in Phase 3.</p>
+        <div class="pl-phase">Phase 3</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         VALUE EXPRESSIONS (Phase 3)
+    ══════════════════════════════════ -->
+    <section id="value-expressions" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--purple-dim);">💎</div>
+        <div><div class="section-title">Value Expressions</div></div>
+      </div>
+      <p class="section-desc">Deferred-evaluation value constructors and condition builders. Values are compiled into CUE expressions — not evaluated immediately in Go.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for <strong>Lit</strong>, <strong>Reference</strong>, <strong>Interpolation</strong>, comparison operators, logical operators, string operations, <strong>Let</strong> bindings — coming in Phase 3.</p>
+        <div class="pl-phase">Phase 3</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         VELACTX (Phase 3)
+    ══════════════════════════════════ -->
+    <section id="velactx" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--cyan-dim);">🌐</div>
+        <div><div class="section-title">VelaCtx</div></div>
+      </div>
+      <p class="section-desc">Runtime context accessors. <code>defkit.VelaCtx()</code> returns a context object that compiles to CUE <code>context.*</code> references, evaluated by the controller at deploy time.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for <strong>VelaCtx().Name()</strong>, <strong>AppName()</strong>, <strong>Namespace()</strong>, <strong>Revision()</strong>, <strong>ClusterVersion()</strong> — coming in Phase 3.</p>
+        <div class="pl-phase">Phase 3</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         HEALTH & STATUS (Phase 3)
+    ══════════════════════════════════ -->
+    <section id="health-status" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--green-dim);">❤️</div>
+        <div><div class="section-title">Health &amp; Status DSL</div></div>
+      </div>
+      <p class="section-desc">Builder DSL for defining health evaluation logic and custom status. Generates the <code>status.healthPolicy</code> and <code>status.customStatus</code> CUE blocks consumed by the controller.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Full API reference for <strong>Health()</strong>, <strong>Status()</strong>, preset builders (<strong>DeploymentHealth</strong>, <strong>DaemonSetHealth</strong>, <strong>JobHealth</strong>) — coming in Phase 3.</p>
+        <div class="pl-phase">Phase 3</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════
+         FULL EXAMPLES (Phase 4)
+    ══════════════════════════════════ -->
+    <section id="full-examples" class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--pink-dim);">📚</div>
+        <div><div class="section-title">Full Examples</div></div>
+      </div>
+      <p class="section-desc">Complete end-to-end definition examples — one per definition type — showing real-world usage patterns with full Go code, CUE output, and inline annotations.</p>
+      <div class="placeholder-box">
+        <div class="pl-icon">📋</div>
+        <p>Complete worked examples for <strong>Component</strong> (webservice-like), <strong>Trait</strong> (env patch), <strong>Policy</strong> (override), and <strong>WorkflowStep</strong> — coming in Phase 4.</p>
+        <div class="pl-phase">Phase 4</div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Prism.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 <script>
-Prism.languages.cue = {
-  'comment': /\/.*/,
-  'string': /"(?:[^"\\]|\\.)*"/,
-  'keyword': /\b(?:if|for|let|import|package|true|false|null|_|close)\b/,
-  'operator': /[=:&|!<>+\-*\/]+/,
-  'punctuation': /[{}[\](),]/,
-  'number': /\b\d+(?:\.\d+)?\b/,
-  'builtin': /\b(?:string|int|bool|float|bytes|list|struct)\b/,
-};
-</script>
-<script>
-const sections = document.querySelectorAll('section[id]');
-const navLinks = document.querySelectorAll('#sidebar a[href^="#"]');
-window.addEventListener('scroll', () => {
-  let current = '';
-  sections.forEach(s => {
-    if (window.scrollY >= s.offsetTop - 120) current = s.id;
-  });
-  navLinks.forEach(a => {
-    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
-  });
-});
-</script>
+  // Custom CUE language grammar for Prism (no official plugin)
+  Prism.languages.cue = {
+    'comment': /\/\/.*/,
+    'string': { pattern: /"(?:[^"\\]|\\.)*"/, greedy: true },
+    'keyword': /\b(?:package|import|let|if|for|in|_|null|true|false)\b/,
+    'builtin': /\b(?:string|int|float|bool|bytes|uint|number)\b/,
+    'operator': /[|&=:?!<>]+/,
+    'punctuation': /[{}[\](),;.]/,
+    'number': /\b\d+(?:\.\d+)?\b/,
+    'property': /\b\w+\s*:/
+  };
 
+  // Active sidebar link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const links    = document.querySelectorAll('.nav-link');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(l => {
+          l.classList.toggle('active',
+            l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { threshold: 0.25 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
 </body>
 </html>
