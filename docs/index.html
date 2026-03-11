@@ -934,10 +934,371 @@ func main() {
         </div>
       </div>
       <p class="section-desc">Top-level factory functions that create the four definition types. Each returns a builder with a fluent chain for configuring the definition.</p>
-      <div class="placeholder-box">
-        <div class="pl-icon">📋</div>
-        <p>Full API reference for <strong>NewComponent</strong>, <strong>NewTrait</strong>, <strong>NewPolicy</strong>, <strong>NewWorkflowStep</strong> and all their chain methods — coming in Phase 2.</p>
-        <div class="pl-phase">Phase 2</div>
+      <!-- NewComponent -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.NewComponent(name string) *ComponentDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">NewComponent</div>
+            <div class="method-desc">Creates a ComponentDefinition builder. Returns a fluent chain to configure the workload type, parameters, and CUE template function.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Type:</span>
+            <span class="pill pill-component">Component</span>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Chain methods available on <code>*ComponentDefinition</code>:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:1rem;">
+            <thead><tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Method</th>
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Description</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.Description(text)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Human-readable description shown in <code>vela show</code>.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.Workload(apiVersion, kind)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Sets the fixed Kubernetes workload GVK. Use when the workload type is always the same (e.g., apps/v1, Deployment).</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.AutodetectWorkload()</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Omits workload GVK — KubeVela detects it from the template output. Use for k8s-objects, ref-objects.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.Params(params...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers one or more parameter definitions built with the parameter builder functions.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.Template(func(tpl))</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Assigns the CUE template function that builds runtime Kubernetes resources.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.Helper(name, param)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers a helper variable available inside the template function.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.CustomStatus(status)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Attaches a custom status DSL expression to the definition.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.HealthPolicy(health)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Attaches a health evaluation DSL expression. Use preset builders like <code>DeploymentHealth()</code>.</td></tr>
+              <tr><td style="padding:0.35rem 0.5rem;"><code style="color:#93c5fd;">.WithImports(imports...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Adds CUE package import paths required by the template body.</td></tr>
+            </tbody>
+          </table>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>func Webservice() *defkit.ComponentDefinition {
+    image := defkit.String("image").Required().
+        Description("Container image to run")
+    replicas := defkit.Int("replicas").Default(1).
+        Description("Number of replicas")
+
+    return defkit.NewComponent("webservice").
+        Description("HTTP microservice backed by a Deployment").
+        Workload("apps/v1", "Deployment").
+        Params(image, replicas).
+        Template(webserviceTemplate)
+}
+
+func init() { defkit.Register(Webservice()) }</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// KubeVela generates this schema from the builder:
+parameter: {
+    image:    string
+    replicas: *1 | int
+}
+
+// and the template function becomes the CUE
+// output/patch body compiled by the controller</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NewTrait -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.NewTrait(name string) *TraitDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">NewTrait</div>
+            <div class="method-desc">Creates a TraitDefinition builder. Traits patch or augment existing component workloads. They can target specific workload types and optionally mutate container specs.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Type:</span>
+            <span class="pill pill-trait">Trait</span>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Chain methods available on <code>*TraitDefinition</code>:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:1rem;">
+            <thead><tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Method</th>
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Description</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.Description(text)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Human-readable description of the trait's purpose.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.AppliesTo(workloads...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Restricts which component types this trait can attach to (e.g., <code>"webservice"</code>, <code>"daemon"</code>). Omit for universal traits.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.ConflictsWith(traits...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Declares mutual exclusion with other named traits.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.PodDisruptive(bool)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Marks the trait as pod-disruptive (triggers pod restart when changed).</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.Stage(stage)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Sets the dispatch stage for ordering trait application.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.Labels(map)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Attaches metadata labels to the TraitDefinition CRD.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.Params(params...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers typed parameter definitions.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.Template(func(tpl))</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Assigns the patch template function. For container mutation use <code>tpl.UsePatchContainer(config)</code> inside.</td></tr>
+              <tr><td style="padding:0.35rem 0.5rem;"><code style="color:#fb923c;">.Helper(name, param)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers a helper variable for use in the template function.</td></tr>
+            </tbody>
+          </table>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>func Env() *defkit.TraitDefinition {
+    envs := defkit.Array("env").Of(defkit.Struct("envItem").
+        WithFields(
+            defkit.String("name").Required(),
+            defkit.String("value").Optional(),
+        )).Description("Environment variables to inject")
+
+    return defkit.NewTrait("env").
+        Description("Inject environment variables into containers").
+        AppliesTo("webservice", "daemon", "worker").
+        PodDisruptive(true).
+        Params(envs).
+        Template(envTemplate)
+}
+
+func init() { defkit.Register(Env()) }</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>parameter: {
+    env?: [...{
+        name:   string
+        value?: string
+    }]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NewPolicy -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.NewPolicy(name string) *PolicyDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">NewPolicy</div>
+            <div class="method-desc">Creates a PolicyDefinition builder. Policies are applied globally to applications and have no workload coupling. They control lifecycle behaviors like garbage collection, apply-once semantics, or override rules.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Type:</span>
+            <span class="pill pill-policy">Policy</span>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Chain methods available on <code>*PolicyDefinition</code>:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:1rem;">
+            <thead><tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Method</th>
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Description</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#f472b6;">.Description(text)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Human-readable description of the policy behavior.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#f472b6;">.Params(params...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers typed parameter definitions for the policy.</td></tr>
+              <tr><td style="padding:0.35rem 0.5rem;"><code style="color:#f472b6;">.Helper(name, param)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers a named helper variable for the template body.</td></tr>
+            </tbody>
+          </table>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>func ApplyOnce() *defkit.PolicyDefinition {
+    enable := defkit.Bool("enable").Default(true).
+        Description("Disable KubeVela from re-applying components on every reconcile")
+    rules := defkit.Array("rules").Of(defkit.Struct("rule").
+        WithFields(
+            defkit.StringList("selector").Optional(),
+        )).Optional()
+
+    return defkit.NewPolicy("apply-once").
+        Description("Prevent KubeVela from re-applying resources that already exist").
+        Params(enable, rules)
+}
+
+func init() { defkit.Register(ApplyOnce()) }</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>parameter: {
+    enable: *true | bool
+    rules?: [...{
+        selector?: [...string]
+    }]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NewWorkflowStep -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">defkit.NewWorkflowStep(name string) *WorkflowStepDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">NewWorkflowStep</div>
+            <div class="method-desc">Creates a WorkflowStepDefinition builder. Workflow steps describe actions in application delivery pipelines — deploying components, running builds, applying Terraform configs, or checking metrics.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Type:</span>
+            <span class="pill pill-workflow">WorkflowStep</span>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Chain methods available on <code>*WorkflowStepDefinition</code>:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:1rem;">
+            <thead><tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Method</th>
+              <th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-muted);font-weight:600;">Description</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#22d3ee;">.Description(text)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Human-readable description of what the step does.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#22d3ee;">.Category(name)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Groups the step under a category in the KubeVela UI and CLI.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#22d3ee;">.Scope(scope)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Sets execution scope. Typically <code>"Application"</code> for delivery steps.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#22d3ee;">.Params(params...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Registers typed parameter definitions for the step.</td></tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:0.35rem 0.5rem;"><code style="color:#22d3ee;">.Template(func(tpl))</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Assigns the CUE template function executed when the step runs.</td></tr>
+              <tr><td style="padding:0.35rem 0.5rem;"><code style="color:#22d3ee;">.WithImports(imports...)</code></td><td style="padding:0.35rem 0.5rem;color:var(--text-muted);">Adds CUE package import paths used by the template body.</td></tr>
+            </tbody>
+          </table>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>func ApplyComponent() *defkit.WorkflowStepDefinition {
+    comp := defkit.String("component").Required().
+        Description("Name of the component to apply")
+
+    return defkit.NewWorkflowStep("apply-component").
+        Description("Apply a single component from the Application").
+        Category("Deploy").
+        Scope("Application").
+        Params(comp).
+        Template(applyComponentTemplate)
+}
+
+func init() { defkit.Register(ApplyComponent()) }</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>parameter: {
+    component: string
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Special methods subsection -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Special Methods</h3>
+
+      <!-- AutodetectWorkload -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">.AutodetectWorkload() *ComponentDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">AutodetectWorkload</div>
+            <div class="method-desc">Omits a fixed workload GVK. Use when the component template can produce different resource kinds depending on parameters (e.g., k8s-objects accepts arbitrary manifests, ref-objects references existing resources).</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Applies to:</span>
+            <span class="pill pill-component">Component</span>
+          </div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>// Use AutodetectWorkload when the output kind varies
+return defkit.NewComponent("k8s-objects").
+    Description("Deploy arbitrary Kubernetes resources").
+    AutodetectWorkload().   // no fixed GVK — KubeVela detects
+    Params(objects).
+    Template(k8sObjectsTemplate)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>When to use vs .Workload()</div>
+              <pre class="language-cue"><code>// .Workload("apps/v1", "Deployment")
+// → use when the component always produces
+//   exactly one fixed resource kind
+
+// .AutodetectWorkload()
+// → use when template may output multiple
+//   different resource kinds, or zero
+//   (k8s-objects, ref-objects patterns)</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RawCUE -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">.RawCUE(cueTemplate string) *ComponentDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">RawCUE</div>
+            <div class="method-desc">Injects a raw CUE string as the template body, bypassing the fluent resource builder entirely. Use when the CUE logic cannot be expressed with the builder DSL (e.g., highly dynamic object iteration). Mutually exclusive with <code>.Template()</code>.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Applies to:</span>
+            <span class="pill pill-component">Component</span>
+          </div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>rawBody := `
+    outputs: {
+        for i, obj in parameter.objects {
+            "object-\(i)": obj
+        }
+    }
+`
+
+return defkit.NewComponent("k8s-objects").
+    AutodetectWorkload().
+    Params(objects).
+    RawCUE(rawBody)   // bypasses .Template()</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>Raw CUE body injected verbatim</div>
+              <pre class="language-cue"><code>// The string is placed directly into the
+// generated CUE definition file.
+// You get full CUE power but lose the
+// type-safe builder DSL.
+//
+// Use RawCUE only when the fluent builder
+// cannot express what you need.</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WithImports -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">.WithImports(imports ...string) *ComponentDefinition</code>
+          <div class="method-meta">
+            <div class="method-title">WithImports</div>
+            <div class="method-desc">Adds CUE package import paths to the generated definition file. Required when your template body references CUE standard library packages (e.g., <code>strings</code>, <code>math</code>) or custom KubeVela packages. Available on ComponentDefinition and WorkflowStepDefinition.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies">
+            <span class="applies-label">Applies to:</span>
+            <span class="pill pill-component">Component</span>
+            <span class="pill pill-workflow">WorkflowStep</span>
+          </div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>return defkit.NewComponent("my-component").
+    Description("Uses CUE strings package").
+    Workload("apps/v1", "Deployment").
+    WithImports("strings").  // adds: import "strings"
+    Params(name).
+    Template(myTemplate)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated header</div>
+              <pre class="language-cue"><code>import (
+    "strings"
+)
+
+// template body can now use:
+//   strings.ToLower(parameter.name)</code></pre>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
