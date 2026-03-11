@@ -22,6 +22,9 @@ Thumbs.db
 
 # Local
 local/*
+docs/index.html
+docs/style-*.html
+docs/.claude
 
 # Planning & tooling (local only)
 .planning/
