@@ -37,7 +37,11 @@ Plans:
   3. Every scalar, collection, and complex parameter type has a documented entry
   4. Every chain method (Required, Optional, Default, Description, Values, Min, Max, WithFields, Of) shows Go snippet and CUE equivalent side by side
   5. Definition-level chain methods (Description, Workload, Params, Template, AppliesTo, WithImports) are documented per definition type
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Definition Builders: NewComponent, NewTrait, NewPolicy, NewWorkflowStep + chain methods + AutodetectWorkload/RawCUE/WithImports (DEF-01 to DEF-08)
+- [ ] 02-02-PLAN.md — Parameter Builders: scalar/collection/complex types + all chain methods (PARAM-01 to PARAM-04)
 
 ### Phase 3: Template + Resource + Value + VelaCtx + Health
 **Goal**: The full runtime-construction API is documented — templates, resource builders, value expressions, context accessors, and health/status DSL
@@ -72,6 +76,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Page Shell | 1/1 | Complete    | 2026-03-11 |
-| 2. Definition + Parameter API | 0/TBD | Not started | - |
+| 2. Definition + Parameter API | 0/2 | Not started | - |
 | 3. Template + Resource + Value + VelaCtx | 0/TBD | Not started | - |
 | 4. Full Examples | 0/TBD | Not started | - |
