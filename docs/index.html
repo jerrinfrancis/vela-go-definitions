@@ -1989,10 +1989,356 @@ parameter: {
         <div><div class="section-title">Template Methods</div></div>
       </div>
       <p class="section-desc">The <code>*defkit.Template</code> context object passed to the template function. Manages output resources, patch operations, and named helpers.</p>
-      <div class="placeholder-box">
-        <div class="pl-icon"><span class="material-icons-round">hourglass_empty</span></div>
-        <p>Full API reference for <strong>tpl.Output</strong>, <strong>tpl.Patch</strong>, <strong>tpl.UsePatchContainer</strong>, <strong>tpl.Helper</strong>, raw CUE block methods — coming in Phase 3.</p>
-        <div class="pl-phase">Phase 3</div>
+      <!-- ── OUTPUT METHODS ─────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem;color:var(--text);">Output Methods</h3>
+
+      <!-- tpl.Output -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.Output(resource *Resource)</code>
+          <div class="method-meta">
+            <div class="method-title">Output</div>
+            <div class="method-desc">Sets the primary output resource of the template. In CUE this becomes the top-level <code>output: { ... }</code> block. Every component template calls this exactly once.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>func myTemplate(tpl *defkit.Template) {
+    vela := defkit.VelaCtx()
+    image := defkit.String("image")
+
+    deployment := defkit.NewResource("apps/v1", "Deployment").
+        Set("metadata.name", vela.Name()).
+        Set("spec.template.spec.containers[0].image", image)
+
+    tpl.Output(deployment)
+}</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>output: {
+    apiVersion: "apps/v1"
+    kind:       "Deployment"
+    metadata: name: context.name
+    spec: template: spec: containers: [{
+        image: parameter.image
+    }]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tpl.Outputs / tpl.OutputsIf -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.Outputs(name string, resource *Resource) / tpl.OutputsIf(cond, name, resource)</code>
+          <div class="method-meta">
+            <div class="method-title">Outputs / OutputsIf</div>
+            <div class="method-desc">Adds a named secondary output resource. Use when a trait or component creates additional Kubernetes objects (e.g., an HPA, Service, Secret). <code>OutputsIf</code> conditionally includes the resource based on a boolean value expression.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-trait">Trait</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>// Always emit the secondary resource
+tpl.Outputs("cpuscaler", hpa)
+
+// Only emit when create == true
+create := defkit.Bool("create").Default(false)
+tpl.OutputsIf(create.IsTrue(), "service-account", serviceAccount)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// tpl.Outputs("cpuscaler", hpa)
+outputs: cpuscaler: {
+    apiVersion: "autoscaling/v1"
+    kind:       "HorizontalPodAutoscaler"
+    ...
+}
+
+// tpl.OutputsIf(create.IsTrue(), ...)
+if parameter.create {
+    outputs: "service-account": { ... }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PATCH METHODS ───────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Patch Methods</h3>
+
+      <!-- tpl.Patch / tpl.SetRawPatchBlock -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.Patch() *Resource / tpl.PatchStrategy(strategy) / tpl.SetRawPatchBlock(cue string)</code>
+          <div class="method-meta">
+            <div class="method-title">Patch / PatchStrategy / SetRawPatchBlock</div>
+            <div class="method-desc"><code>tpl.Patch()</code> returns a resource builder whose <code>.Set()</code> calls build the CUE <code>patch: { ... }</code> block. <code>tpl.PatchStrategy()</code> sets the merge strategy (e.g., <code>"retainKeys"</code>, <code>"jsonMergePatch"</code>, <code>"jsonPatch"</code>). <code>tpl.SetRawPatchBlock()</code> injects a raw CUE string as the entire patch block — use when the fluent builder can't express the needed structure.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-trait">Trait</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>// Fluent patch builder
+name := defkit.String("serviceAccountName").Required()
+tpl.PatchStrategy("retainKeys")
+tpl.Patch().Set("spec.template.spec.serviceAccountName", name)
+
+// Raw CUE patch block (for complex cases)
+tpl.SetRawPatchBlock(`patch: spec: template: spec: {
+    containers: [{
+        name: parameter.containerName
+        env: parameter.env
+    }]
+}`)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// Fluent builder output
+patchStrategy: retainKeys
+patch: {
+    spec: template: spec: {
+        serviceAccountName: parameter.serviceAccountName
+    }
+}
+
+// Raw block output (verbatim)
+patch: spec: template: spec: {
+    containers: [{...}]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tpl.UsePatchContainer -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.UsePatchContainer(config defkit.PatchContainerConfig)</code>
+          <div class="method-meta">
+            <div class="method-title">UsePatchContainer</div>
+            <div class="method-desc">High-level helper for traits that patch individual containers. Generates the full <code>patchSets</code> / <code>patch</code> CUE block with container targeting, optional multi-container support, and field declarations. Use when your trait mutates container fields (env, resources, image, ports, security context, etc.).</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-trait">Trait</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>tpl.UsePatchContainer(defkit.PatchContainerConfig{
+    ContainerNameParam:    "containerName",
+    DefaultToContextName:  true,   // use context.name if unset
+    AllowMultiple:         true,   // allow multi-container
+    ContainersParam:       "containers",
+    ContainersDescription: "Specify containers to patch",
+    PatchFields: []defkit.PatchContainerField{
+        {
+            ParamName:    "replace",
+            TargetField:  "replace",
+            ParamType:    "bool",
+            ParamDefault: "false",
+            Description:  "Replace all env vars",
+        },
+        {
+            ParamName:   "env",
+            TargetField: "env",
+            ParamType:   "[string]: string",
+            Description: "Env vars to merge",
+        },
+    },
+    // Optional: inject raw CUE body for complex logic
+    CustomPatchContainerBlock: `_params: #PatchParams
+name: _params.containerName
+env: [for k, v in _params.env { name: k, value: v }]`,
+})</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>#PatchParams: {
+    containerName?: *context.name | string
+    containers?: [...{
+        containerName?: string
+        replace: *false | bool
+        env: [string]: string
+    }]
+}
+
+patchSets: [{
+    name: "container-patch"
+    patches: [...]
+}]
+patch: { ... }</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RAW CUE BLOCKS ──────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Raw CUE Blocks</h3>
+
+      <!-- tpl.SetRawHeaderBlock / tpl.SetRawOutputsBlock -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.SetRawHeaderBlock(cue string) / tpl.SetRawOutputsBlock(cue string)</code>
+          <div class="method-meta">
+            <div class="method-title">SetRawHeaderBlock / SetRawOutputsBlock</div>
+            <div class="method-desc"><code>SetRawHeaderBlock</code> injects raw CUE at the top of the template body — used for CUE <code>let</code> bindings and import aliases that the fluent builder can't express. <code>SetRawOutputsBlock</code> injects raw CUE into the outputs section — used for conditional outputs with complex CUE logic (list comprehensions, conditional blocks).</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-all">All Definition Types</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>// Raw header: let bindings at template top
+tpl.SetRawHeaderBlock(`let nameSuffix = {
+    if parameter.name != _|_ {"-" + parameter.name}
+    if parameter.name == _|_ {""}
+}
+
+let serviceMetaName = {
+    if parameter.existingServiceName != _|_ {parameter.existingServiceName}
+    if parameter.existingServiceName == _|_ {context.name + nameSuffix}
+}`)
+
+// Raw outputs: complex conditional output block
+tpl.SetRawOutputsBlock(`if (parameter.existingServiceName == _|_) {
+    outputs: service: {
+        apiVersion: "v1"
+        kind:       "Service"
+        metadata: name: "\(serviceMetaName)"
+        spec: ports: [
+            for k, v in parameter.http { port: v }
+        ]
+    }
+}`)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated position</div>
+              <pre class="language-cue"><code>// SetRawHeaderBlock → injected at TOP of template
+let nameSuffix = { ... }
+let serviceMetaName = { ... }
+
+output: { ... }        // defkit-generated output
+
+// SetRawOutputsBlock → injected AFTER output block
+if (parameter.existingServiceName == _|_) {
+    outputs: service: { ... }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HELPER BUILDER ─────────────────────── -->
+      <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);">Helper Builder</h3>
+
+      <!-- tpl.Helper() -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.Helper(name string) *HelperBuilder</code>
+          <div class="method-meta">
+            <div class="method-title">Helper</div>
+            <div class="method-desc">Builds a CUE <code>let</code> variable by transforming an array parameter into a derived list. The helper variable is injected into the template header block and can be referenced in resource <code>.Set()</code> calls as a <code>defkit.LetVariable(name)</code>. Chain: <code>.FromFields(param, keys...)</code> → <code>.Pick(fields...)</code> / <code>.PickIf(cond, field)</code> → <code>.Build()</code>.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>volumeMounts := defkit.Object("volumeMounts")
+
+// Build a derived array picking only mount-relevant fields
+mountsArray := tpl.Helper("mountsArray").
+    FromFields(volumeMounts, "pvc", "configMap", "secret", "emptyDir", "hostPath").
+    Pick("name", "mountPath").
+    PickIf(defkit.ItemFieldIsSet("subPath"), "subPath").
+    Build()
+
+// Use the helper result in a resource Set call
+deployment.Set("spec.template.spec.containers[0].volumeMounts", mountsArray)</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// Helper injected as let binding in header
+let mountsArray = [
+    for _, v in parameter.volumeMounts
+    if v.type == "pvc" || v.type == "configMap" || ... {
+        name:      v.name
+        mountPath: v.mountPath
+        if v.subPath != _|_ { subPath: v.subPath }
+    }
+]
+
+// Resource field using the helper
+spec: template: spec: containers: [{
+    volumeMounts: mountsArray
+}]</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tpl.AddLetBinding -->
+      <div class="method-card">
+        <div class="method-header">
+          <code class="method-sig">tpl.AddLetBinding(name string, value Value)</code>
+          <div class="method-meta">
+            <div class="method-title">AddLetBinding</div>
+            <div class="method-desc">Injects a CUE <code>let name = expr</code> binding directly into the template header. Use when the computation is based on a <code>defkit.From()</code> pipeline (filter, map, dedupe) and you want to reference the result multiple times via <code>defkit.LetVariable(name)</code>.</div>
+          </div>
+        </div>
+        <div class="method-body">
+          <div class="method-applies"><span class="applies-label">Applies to:</span><span class="pill pill-trait">Trait</span><span class="pill pill-component">Component</span></div>
+          <div class="code-pair">
+            <div class="code-block">
+              <div class="code-label go"><span class="dot"></span>Go — defkit</div>
+              <pre class="language-go"><code>privileges := defkit.Array("privileges").Optional()
+
+// Add let bindings for filtered sub-lists
+tpl.AddLetBinding("_clusterPrivileges",
+    defkit.From(privileges).
+        Filter(defkit.FieldEquals("scope", "cluster")).
+        Guard(privileges.IsSet()))
+
+tpl.AddLetBinding("_namespacePrivileges",
+    defkit.From(privileges).
+        Filter(defkit.FieldEquals("scope", "namespace")).
+        Guard(privileges.IsSet()))
+
+// Reference the bindings later
+clusterPrivsRef := defkit.LetVariable("_clusterPrivileges")
+namespacePrivsRef := defkit.LetVariable("_namespacePrivileges")</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label cue"><span class="dot"></span>CUE — generated</div>
+              <pre class="language-cue"><code>// Injected at template header
+let _clusterPrivileges = [
+    if parameter.privileges != _|_ {
+        for p in parameter.privileges
+        if p.scope == "cluster" { p }
+    }
+]
+
+let _namespacePrivileges = [
+    if parameter.privileges != _|_ {
+        for p in parameter.privileges
+        if p.scope == "namespace" { p }
+    }
+]</code></pre>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
